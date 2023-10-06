@@ -1,6 +1,6 @@
 import httpclient, configparser, os, irc
 
-let current_version* = "1.0.4"
+let current_version* = "1.0.4.1"
 
 var g_tmp_clean* = false
 
