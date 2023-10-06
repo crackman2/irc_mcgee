@@ -13,6 +13,24 @@
                 "reveal": "always"
             },
             "group": "build"
+        },
+
+
+        {
+            "label": "Helper Build",
+            "command": "nim c -d:release --opt:size --app:gui --checks:off --stackTrace:off ./irc_mchelper.nim; strip -s irc_mchelper.exe; upx irc_mchelper.exe --ultra-brute",
+            "type": "shell",
+            "args": [],
+            "problemMatcher": [
+                "$tsc"
+            ],
+            "presentation": {
+                "reveal": "always"
+            },
+            "group": "build"
         }
     ]
 }
+
+
+//

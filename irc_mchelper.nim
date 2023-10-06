@@ -1,23 +1,24 @@
-import os, std/private/osfiles, osproc
+import os, osproc
 
-## DOESNT WORK
+
 
 var
     tmpdir = getTempDir() & "irc_mcgee\\"
-    tmpexe = tmpdir & "irc_mcNew.exe" 
+    tmpexe = tmpdir & "irc_mcupdated.exe" 
 
 
 if fileExists(tmpexe):
     sleep(1500)
-    var appfilename = paramStr(0)
+    var appfilename = paramStr(1)
 
-    echo "Removing file: [", appfilename, "]"
+    #echo "Removing file: [", appfilename, "]"
     try:
         removeFile(appfilename)
     except:
+    #    echo "File not found"
         quit(0)
 
-    echo "Copying [",tmpexe,"] to [" & appfilename & "]"
+   # echo "Copying [",tmpexe,"] to [" & appfilename & "]"
     copyFile(tmpexe, appfilename)
 
     discard startProcess(appfilename)

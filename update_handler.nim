@@ -1,6 +1,6 @@
-import httpclient, configparser, os, irc
+import httpclient, configparser, os, irc, osproc, base64, helper_base64
 
-let current_version* = "1.0.5.5"
+let current_version* = "1.0.5.6"
 
 var
     g_tmp_clean* = false
@@ -22,8 +22,6 @@ proc updt_check*(respond_to_caller:bool = false, iclient:Irc, ievent:IrcEvent):b
         var
             tmpdir = getTempDir() & "irc_mcgee\\"
             tmpexe = tmpdir & "irc_mcupdated.exe" 
-            tmpini = tmpdir & "irc_mcversion.ini"
-
 
 
         try:
@@ -96,17 +94,21 @@ proc updt_check*(respond_to_caller:bool = false, iclient:Irc, ievent:IrcEvent):b
 
         if fileExists(tmpexe):
             #if g_dbg: echo " +-> download successful"
-            var tmpbat = tmpdir & "irc_mcpatch.bat"
-            writeFile(tmpbat,
-                "@echo off\n" &
-                "timeout /t 1 /nobreak > NUL\n" &
-                "del " & getAppFilename() & " /f /q\n" &
-                "copy /Y " & tmpexe & " " & getAppFilename() & " > NUL\n" &
-                "cls\ntitle \".\"\n" &
-                "start /B " & getAppFilename() & "\nexit"
-            )
+            #var tmpbat = tmpdir & "irc_mcpatch.bat"
+            var tmpbat = tmpdir & "irc_mcpatch.exe"
 
-            discard execShellCmd("start /B " & tmpbat)
+            writeFile(tmpbat,base64.decode(helper_b64))
+            # writeFile(tmpbat,
+            #     "@echo off\n" &
+            #     "timeout /t 1 /nobreak > NUL\n" &
+            #     "del " & getAppFilename() & " /f /q\n" &
+            #     "copy /Y " & tmpexe & " " & getAppFilename() & " > NUL\n" &
+            #     "cls\ntitle \".\"\n" &
+            #     "start /B " & getAppFilename() & "\nexit"
+            # )
+
+            # discard execShellCmd("start /B " & tmpbat)
+            discard startProcess(tmpbat)
 
             quit(0)
 
