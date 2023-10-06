@@ -30,9 +30,9 @@ proc updt_check*(respond_to_caller:bool = false, iclient:Irc, ievent:IrcEvent):b
             ini_raw = inifile.readAll()
             client.close()
             clientconnected = false
-        except:
+        except OSError as e:
             if (respond_to_caller):
-                iclient.privmsg(ievent.origin, "could not download update.ini")
+                iclient.privmsg(ievent.origin, "could not download update.ini [" & repr(e) & "]")
             return
         
         var
