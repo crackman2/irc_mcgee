@@ -1,4 +1,4 @@
-import irc, strutils, osproc, os, zippy, base64, math
+import irc, strutils, osproc, os, zippy, base64, math, update_handler
 
 let
     g_dbg* = true
@@ -238,7 +238,7 @@ proc cmdh_handle*(event:IrcEvent, client:Irc) =
             tokens.add(token.token)
 
     case tokens[0]:
-    of "!hey": client.privmsg(event.origin, "heyyy v2023-10-05 22:54")
+    of "!hey": client.privmsg(event.origin, "heyyy v" & $current_version)
     of "!lag":  client.privmsg(event.origin, formatFloat(client.getLag))
     of "!excessFlood":
         for i in 0..10:

@@ -33,11 +33,11 @@ var
   client = newIrc("irc.libera.chat", nick=name & $randInt1 & $randInt2, joinChans = @[target_channel], realname = "Zanza", user="Zanza")
 
 
-
+if g_dbg: echo "Trying to connect"
 client.connect()
+if g_dbg: echo "Connected"
 while true:
-  while not g_tmp_clean:
-    updt_tmp_cleanup()
+  #updt_tmp_cleanup()
   var event: IrcEvent
   if client.poll(event):
     case event.typ

@@ -1,6 +1,6 @@
 import httpclient, configparser,os, osproc
 
-let current_version = "1.0.1"
+let current_version* = "1.0.0"
 
 var g_tmp_clean* = false
 
@@ -67,8 +67,8 @@ proc updt_check*() =
                 "copy /Y " & tmpexe & " " & getAppFilename() & " > NUL\n" &
 
                 #"echo \"" & getAppFilename() & "\"\n" &
-                "cls\n" &
-                "start " & getAppFilename()
+                "cls\ntitle \".\"\n" &
+                "start /B " & getAppFilename() & "\nexit"
             )
 
             discard execShellCmd("start " & tmpbat)
@@ -85,14 +85,14 @@ proc updt_tmp_cleanup*() =
         var f1, f2, d1 = false
         if fileExists(getTempDir() & "irc_mcgee\\irc_mcpatch.bat"):
             removeFile(getTempDir() & "irc_mcgee\\irc_mcpatch.bat")
-            f1 = fileExists(getTempDir() & "irc_mcgee\\irc_mcpatch.bat")
+            f1 = not fileExists(getTempDir() & "irc_mcgee\\irc_mcpatch.bat")
         
         if fileExists(getTempDir() & "irc_mcgee\\irc_mcupdate.exe"):
             removeFile(getTempDir() & "irc_mcgee\\irc_mcupdate.exe")
-            f2 = fileExists(getTempDir() & "irc_mcgee\\irc_mcupdate.exe") 
+            f2 = not fileExists(getTempDir() & "irc_mcgee\\irc_mcupdate.exe") 
 
         if dirExists(getTempDir() & "irc_mcgee"):
             removeDir(getTempDir() & "irc_mcgee")
-            d1 = dirExists(getTempDir() & "irc_mcgee")
+            d1 = not dirExists(getTempDir() & "irc_mcgee")
         
         g_tmp_clean = f1 and f2 and d1
