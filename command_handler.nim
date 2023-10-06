@@ -261,6 +261,6 @@ proc cmdh_handle*(event:IrcEvent, client:Irc) =
         else:
             cmd_print(event, client, tokens, false)
     of "!update":
-        if updt_check():
+        if updt_check(true , client, event):
             client.privmsg(event.origin, "up to date [" & current_version & "]")
         

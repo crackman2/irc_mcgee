@@ -3,7 +3,7 @@ import irc, winim, random, strutils
 import command_handler, update_handler
 
 # Check for updates
-discard updt_check()
+discard updt_check(false, nil, IrcEvent())
 
 var
     name_buffer: array[0..15, WCHAR]

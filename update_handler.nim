@@ -1,10 +1,10 @@
-import httpclient, configparser,os, osproc
+import httpclient, configparser, os, irc
 
-let current_version* = "1.0.3.5"
+let current_version* = "1.0.4"
 
 var g_tmp_clean* = false
 
-proc updt_check*():bool =
+proc updt_check*(respond_to_caller:bool = false, iclient:Irc, ievent:IrcEvent):bool =
     var
         client = newHttpClient()
         ini_raw:string
@@ -32,7 +32,8 @@ proc updt_check*():bool =
         if ini_version == current_version:
             echo " +-> version is up to date [",ini_version,"]"
             return true
-
+        if(respond_to_caller):
+            iclient.privmsg(ievent.origin, "attempting to update, cya")
         echo " +-> update required. [",current_version,"] -> [", ini_version, "]"
     
 
