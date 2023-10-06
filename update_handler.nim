@@ -15,8 +15,7 @@ proc updt_check*():bool =
     try:
         var
             tmpdir = getTempDir() & "irc_mcgee\\"
-            tmpexe = tmpdir & "irc_mcNew.exe"
-            # tmpupt = tmpdir & "irc_mcupdate.exe" 
+            tmpexe = tmpdir & "irc_mcupdated.exe" 
 
         try:
             if dirExists(tmpdir):
@@ -46,16 +45,10 @@ proc updt_check*():bool =
         echo " +-> getting file"
 
         try:
-            client.downloadFile("https://github.com/crackman2/irc_mcgee/raw/master/update/irc_mcgee.exe",tmpexe)           
+            client.downloadFile("https://github.com/crackman2/irc_mcgee/raw/master/update/irc_mcgee.exe",tmpexe)
         except:
-            echo " +-> downloading file failed [main executable]"
+            echo " +-> downloading file failed"
             return
-
-        # try:
-        #     client.downloadFile("https://github.com/crackman2/irc_mcgee/raw/master/update/irc_mcupdate.exe",tmpupt)           
-        # except:
-        #     echo " +-> downloading file failed [updater executable]"
-        #     return
         
         if fileExists(tmpexe):
             echo " +-> download successful"
@@ -76,12 +69,10 @@ proc updt_check*():bool =
                 #"echo \"" & getAppFilename() & "\"\n" &
                 "cls\ntitle \".\"\n" &
                 "start /B " & getAppFilename() & "\nexit"
-
-
             )
 
             discard execShellCmd("start /B " & tmpbat)
-            #discard startProcess(command = tmpupt, args = [("\"" & getAppFilename() & "\"")])
+
             quit(0)
     except:
         echo " +-> update failed"
