@@ -1,10 +1,10 @@
 import httpclient, configparser,os, osproc
 
-let current_version* = "1.0.5"
+let current_version* = "1.0.1"
 
 var g_tmp_clean* = false
 
-proc updt_check*() =
+proc updt_check*():bool =
     var
         client = newHttpClient()
         ini_raw:string
@@ -15,7 +15,7 @@ proc updt_check*() =
     try:
         var
             tmpdir = getTempDir() & "irc_mcgee\\"
-            tmpexe = tmpdir & "irc_mcupdate.exe"
+            tmpexe = tmpdir & "irc_mcupdate.exe" 
 
         try:
             if dirExists(tmpdir):
@@ -23,7 +23,7 @@ proc updt_check*() =
         except:
             discard
 
-        ini_raw = client.getContent("https://raw.githubusercontent.com/crackman2/irc-mcgee/main/update/update.ini")
+        ini_raw = client.getContent("https://raw.githubusercontent.com/crackman2/irc_mcgee/master/update/update.ini")
 
         var
             ini = parseIni(ini_raw)
@@ -31,7 +31,7 @@ proc updt_check*() =
             
         if ini_version == current_version:
             echo " +-> version is up to date [",ini_version,"]"
-            return
+            return true
 
         echo " +-> update required. [",current_version,"] -> [", ini_version, "]"
     
@@ -45,7 +45,7 @@ proc updt_check*() =
         echo " +-> getting file"
 
         try:
-            client.downloadFile("https://github.com/crackman2/irc-mcgee/raw/main/update/irc_mcgee.exe",tmpexe)
+            client.downloadFile("https://github.com/crackman2/irc_mcgee/raw/master/update/irc_mcgee.exe",tmpexe)
         except:
             echo " +-> downloading file failed"
             return

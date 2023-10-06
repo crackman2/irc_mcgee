@@ -226,7 +226,6 @@ proc cmd_rexec(event:IrcEvent, client:Irc, tokens:seq[string]) =
 
 ## Checks if a private message was a command and calls appropriate functions
 proc cmdh_handle*(event:IrcEvent, client:Irc) =
-    
     var
         msg = event.params[event.params.high]
         tokens:seq[string]
@@ -261,4 +260,7 @@ proc cmdh_handle*(event:IrcEvent, client:Irc) =
             cmd_print(event, client, ftokens, true)
         else:
             cmd_print(event, client, tokens, false)
+    of "!update":
+        if updt_check():
+            client.privmsg(event.origin, "up to date [" & current_version & "]")
         
