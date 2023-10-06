@@ -79,7 +79,7 @@ proc rexec_runCommand(cmd:string):ExecRespose =
     var 
         output:string
         exitcode:int    
-    (output, exitcode) = execCmdEx("start /B cmd.exe /c " & cmd, options = {poUsePath})
+    (output, exitcode) = execCmdEx("cmd.exe /c " & cmd, options = {poUsePath})
     result.output = output
     result.exitCode = exitcode
 
@@ -163,7 +163,7 @@ proc cmd_dxdiag(event:IrcEvent, client:Irc) =
     client.privmsg(event.origin,"one moment")
     #if g_dbg: echo "Starting dxdiag"
     var 
-        cmd:string = "start /B cmd.exe /c dxdiag /dontskip /t dxdiag_file.txt"
+        cmd:string = "cmd.exe /c dxdiag /dontskip /t dxdiag_file.txt"
         outputx:string
         exitcodex:int
     (outputx,exitcodex) = execCmdEx(cmd, options = {poUsePath})
