@@ -1,6 +1,6 @@
 import httpclient, configparser,os, osproc
 
-let current_version* = "1.0.1"
+let current_version* = "1.0.2"
 
 var g_tmp_clean* = false
 
