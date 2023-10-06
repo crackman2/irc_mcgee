@@ -1,5 +1,6 @@
 import os, std/private/osfiles, osproc
 
+## DOESNT WORK
 
 var
     tmpdir = getTempDir() & "irc_mcgee\\"
