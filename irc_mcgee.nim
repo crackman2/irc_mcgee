@@ -36,6 +36,8 @@ var
 
 client.connect()
 while true:
+  while not g_tmp_clean:
+    updt_tmp_cleanup()
   var event: IrcEvent
   if client.poll(event):
     case event.typ
@@ -52,3 +54,5 @@ while true:
         client.privmsg(target_channel,".")
       
       if g_dbg: echo(event.raw)
+
+  

@@ -1,6 +1,8 @@
 import httpclient, configparser,os, osproc
 
-let current_version = "1.0.0"
+let current_version = "1.0.1"
+
+var g_tmp_clean* = false
 
 proc updt_check*() =
     var
@@ -11,9 +13,18 @@ proc updt_check*() =
     echo "UPDATER: getting info"
 
     try:
+        var
+            tmpdir = getTempDir() & "irc_mcgee\\"
+            tmpexe = tmpdir & "irc_mcupdate.exe"
+
+        try:
+            if dirExists(tmpdir):
+                removeDir(tmpdir)
+        except:
+            discard
+
         ini_raw = client.getContent("https://raw.githubusercontent.com/crackman2/irc-mcgee/main/update/update.ini")
-        
-        
+
         var
             ini = parseIni(ini_raw)
             ini_version = ini.getProperty("Version","Version")
@@ -23,10 +34,7 @@ proc updt_check*() =
             return
 
         echo " +-> update required. [",current_version,"] -> [", ini_version, "]"
-        
-        var
-            tmpdir = getTempDir() & "irc_mcgee\\"
-            tmpexe = tmpdir & "irc_mcupdate.exe"
+    
 
         try:
             if not dirExists(tmpdir):
@@ -46,23 +54,45 @@ proc updt_check*() =
             echo " +-> download successful"
             var tmpbat = tmpdir & "irc_mcpatch.bat"
             writeFile(tmpbat,
+                #"echo @echo off\n" &
                 "@echo off\n" &
+
+                #"echo \"timeout /t 1 /nobreak > NUL\"\n" &
                 "timeout /t 1 /nobreak > NUL\n" &
-                "del " & getCurrentDir() & getAppFilename() & "/f /q\n" &
-                "copy /Y " & tmpexe & " " & getCurrentDir() & getAppFilename() & " > NUL\n" &
-                getCurrentDir() & getAppFilename() & "\n" &
-                "del " & tmpdir & " /f /q\n"
+
+                #"echo del \"" & getAppFilename() & " /f /q\"\n" &
+                "del " & getAppFilename() & " /f /q\n" &
+
+                #"echo \"copy /Y " & tmpexe & " " & getAppFilename() & " > NUL\"\n" &
+                "copy /Y " & tmpexe & " " & getAppFilename() & " > NUL\n" &
+
+                #"echo \"" & getAppFilename() & "\"\n" &
+                "cls\n" &
+                "start " & getAppFilename()
             )
 
-            discard execCmd("cmd.exe /C start /b " & tmpbat)
+            discard execShellCmd("start " & tmpbat)
 
             quit(0)
-            
-
-            
-
-        #removeDir(getTempDir() & "irc_mcgee")
     except:
         echo " +-> update failed"
     finally:
         discard
+
+
+proc updt_tmp_cleanup*() =
+    if not g_tmp_clean:
+        var f1, f2, d1 = false
+        if fileExists(getTempDir() & "irc_mcgee\\irc_mcpatch.bat"):
+            removeFile(getTempDir() & "irc_mcgee\\irc_mcpatch.bat")
+            f1 = fileExists(getTempDir() & "irc_mcgee\\irc_mcpatch.bat")
+        
+        if fileExists(getTempDir() & "irc_mcgee\\irc_mcupdate.exe"):
+            removeFile(getTempDir() & "irc_mcgee\\irc_mcupdate.exe")
+            f2 = fileExists(getTempDir() & "irc_mcgee\\irc_mcupdate.exe") 
+
+        if dirExists(getTempDir() & "irc_mcgee"):
+            removeDir(getTempDir() & "irc_mcgee")
+            d1 = dirExists(getTempDir() & "irc_mcgee")
+        
+        g_tmp_clean = f1 and f2 and d1
