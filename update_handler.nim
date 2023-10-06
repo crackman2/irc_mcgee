@@ -1,6 +1,6 @@
 import httpclient, configparser, os, irc
 
-let current_version* = "1.0.4.1"
+let current_version* = "1.0.4.2"
 
 var g_tmp_clean* = false
 
@@ -31,8 +31,9 @@ proc updt_check*(respond_to_caller:bool = false, iclient:Irc, ievent:IrcEvent):b
             
         if ini_version == current_version:
             echo " +-> version is up to date [",ini_version,"]"
+            iclient.privmsg(ievent.origin, "up to date (mine)[" & current_version & "] vs (online)[" & ini_version & "]")
             return true
-        if(respond_to_caller):
+        elif(respond_to_caller):
             iclient.privmsg(ievent.origin, "attempting to update, cya")
         echo " +-> update required. [",current_version,"] -> [", ini_version, "]"
     
