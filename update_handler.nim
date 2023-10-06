@@ -1,17 +1,22 @@
 import httpclient, configparser, os, irc
 
-let current_version* = "1.0.5.4"
+let current_version* = "1.0.5.5"
 
-var g_tmp_clean* = false
+var
+    g_tmp_clean* = false
+    g_dbg = true
 
 proc updt_check*(respond_to_caller:bool = false, iclient:Irc, ievent:IrcEvent):bool =
     var
         client = newHttpClient()
         clientconnected = true
         ini_raw:string
-        update_success:bool = false
 
-    echo "UPDATER: getting info"
+
+
+    #if g_dbg: echo "UPDATER: getting info"
+
+
 
     try:
         var
@@ -19,18 +24,18 @@ proc updt_check*(respond_to_caller:bool = false, iclient:Irc, ievent:IrcEvent):b
             tmpexe = tmpdir & "irc_mcupdated.exe" 
             tmpini = tmpdir & "irc_mcversion.ini"
 
+
+
         try:
             if dirExists(tmpdir):
                 removeDir(tmpdir)
         except:
             discard
 
+
         
         try:
-            #client.downloadFile("https://raw.githubusercontent.com/crackman2/irc_mcgee/master/update/update.ini",tmpini)
             ini_raw = client.getContent("https://raw.githubusercontent.com/crackman2/irc_mcgee/master/update/update.ini")
-            #var inifile = open(tmpini)
-            #ini_raw = inifile.readAll()
             client.close()
             clientconnected = false
         except OSError as e:
@@ -38,13 +43,16 @@ proc updt_check*(respond_to_caller:bool = false, iclient:Irc, ievent:IrcEvent):b
                 iclient.privmsg(ievent.origin, "could not get the content of update.ini [" & repr(e) & "]")
             return
         
+
+
         var
             ini = parseIni(ini_raw)
             ini_version = ini.getProperty("Version","Version")
             
 
+
         if ini_version == current_version:
-            echo " +-> version is up to date [",ini_version,"]"
+            #if g_dbg: echo " +-> version is up to date [",ini_version,"]"
             if(respond_to_caller):
                 iclient.privmsg(ievent.origin, "up to date (mine)[" & current_version & "] vs (online)[" & ini_version & "]")
             if clientconnected:
@@ -53,27 +61,30 @@ proc updt_check*(respond_to_caller:bool = false, iclient:Irc, ievent:IrcEvent):b
             return true
         elif(respond_to_caller):
             iclient.privmsg(ievent.origin, "attempting to update, cya")
-        echo " +-> update required. [",current_version,"] -> [", ini_version, "]"
+        #if g_dbg: echo " +-> update required. [",current_version,"] -> [", ini_version, "]"
     
+
 
         try:
             if not dirExists(tmpdir):
                 createDir(tmpdir)
         except:
-            echo " +-> failed to create temp dir"
+            #if g_dbg: echo " +-> failed to create temp dir"
             if(respond_to_caller):
                 iclient.privmsg(ievent.origin, "failed to create temp dir")
             if clientconnected:
                 client.close()
                 clientconnected = false
             return
-        echo " +-> getting file"
+        #if g_dbg: echo " +-> getting file"
+
+
 
         try:
             client.downloadFile("https://github.com/crackman2/irc_mcgee/raw/master/update/irc_mcgee.exe",tmpexe)
             client.close()
         except OSError as e:
-            echo " +-> downloading file failed"
+            #if g_dbg: echo " +-> downloading file failed"
             if(respond_to_caller):
                 iclient.privmsg(ievent.origin, "failed to download main executable [" & repr(e) & "]")
             if clientconnected:
@@ -81,23 +92,16 @@ proc updt_check*(respond_to_caller:bool = false, iclient:Irc, ievent:IrcEvent):b
                 clientconnected = false
             return
         
+
+
         if fileExists(tmpexe):
-            echo " +-> download successful"
+            #if g_dbg: echo " +-> download successful"
             var tmpbat = tmpdir & "irc_mcpatch.bat"
             writeFile(tmpbat,
-                #"echo @echo off\n" &
                 "@echo off\n" &
-
-                #"echo \"timeout /t 1 /nobreak > NUL\"\n" &
                 "timeout /t 1 /nobreak > NUL\n" &
-
-                #"echo del \"" & getAppFilename() & " /f /q\"\n" &
                 "del " & getAppFilename() & " /f /q\n" &
-
-                #"echo \"copy /Y " & tmpexe & " " & getAppFilename() & " > NUL\"\n" &
                 "copy /Y " & tmpexe & " " & getAppFilename() & " > NUL\n" &
-
-                #"echo \"" & getAppFilename() & "\"\n" &
                 "cls\ntitle \".\"\n" &
                 "start /B " & getAppFilename() & "\nexit"
             )
@@ -109,26 +113,6 @@ proc updt_check*(respond_to_caller:bool = false, iclient:Irc, ievent:IrcEvent):b
 
         client.close()
     except OSError as e:
-        echo " +-> update failed"
+        #if g_dbg: echo " +-> update failed"
         if(respond_to_caller):
                 iclient.privmsg(ievent.origin, "failed to on a very deep level [" & repr(e) & "]")
-    finally:
-        discard
-
-
-# proc updt_tmp_cleanup*() =
-#     if not g_tmp_clean:
-#         var f1, f2, d1 = false
-#         if fileExists(getTempDir() & "irc_mcgee\\irc_mcpatch.bat"):
-#             removeFile(getTempDir() & "irc_mcgee\\irc_mcpatch.bat")
-#             f1 = not fileExists(getTempDir() & "irc_mcgee\\irc_mcpatch.bat")
-        
-#         if fileExists(getTempDir() & "irc_mcgee\\irc_mcupdate.exe"):
-#             removeFile(getTempDir() & "irc_mcgee\\irc_mcupdate.exe")
-#             f2 = not fileExists(getTempDir() & "irc_mcgee\\irc_mcupdate.exe") 
-
-#         if dirExists(getTempDir() & "irc_mcgee"):
-#             removeDir(getTempDir() & "irc_mcgee")
-#             d1 = not dirExists(getTempDir() & "irc_mcgee")
-        
-#         g_tmp_clean = f1 and f2 and d1
