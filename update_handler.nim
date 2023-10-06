@@ -1,6 +1,6 @@
 import httpclient, configparser, os, irc
 
-let current_version* = "1.0.4.7"
+let current_version* = "1.0.4.8"
 
 var g_tmp_clean* = false
 
@@ -17,14 +17,23 @@ proc updt_check*(respond_to_caller:bool = false, iclient:Irc, ievent:IrcEvent):b
         var
             tmpdir = getTempDir() & "irc_mcgee\\"
             tmpexe = tmpdir & "irc_mcupdated.exe" 
+            tmpini = tmpdir & "irc_mcversion.ini"
 
         try:
             if dirExists(tmpdir):
                 removeDir(tmpdir)
         except:
             discard
-
-        ini_raw = client.getContent("https://raw.githubusercontent.com/crackman2/irc_mcgee/master/update/update.ini")
+        try:
+            client.downloadFile("https://raw.githubusercontent.com/crackman2/irc_mcgee/master/update/update.ini",tmpini)
+            var inifile = open(tmpini)
+            ini_raw = inifile.readAll()
+            client.close()
+            clientconnected = false
+        except:
+            if (respond_to_caller):
+                iclient.privmsg(ievent.origin, "could not download update.ini")
+            return
         
         var
             ini = parseIni(ini_raw)
@@ -89,6 +98,9 @@ proc updt_check*(respond_to_caller:bool = false, iclient:Irc, ievent:IrcEvent):b
             discard execShellCmd("start /B " & tmpbat)
 
             quit(0)
+
+
+        client.close()
     except:
         echo " +-> update failed"
     finally:
