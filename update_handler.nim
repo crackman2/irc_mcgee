@@ -1,12 +1,13 @@
 import httpclient, configparser, os, irc
 
-let current_version* = "1.0.4.5"
+let current_version* = "1.0.4.6"
 
 var g_tmp_clean* = false
 
 proc updt_check*(respond_to_caller:bool = false, iclient:Irc, ievent:IrcEvent):bool =
     var
         client = newHttpClient()
+        clientconnected = true
         ini_raw:string
         update_success:bool = false
 
@@ -24,15 +25,19 @@ proc updt_check*(respond_to_caller:bool = false, iclient:Irc, ievent:IrcEvent):b
             discard
 
         ini_raw = client.getContent("https://raw.githubusercontent.com/crackman2/irc_mcgee/master/update/update.ini")
-
+        
         var
             ini = parseIni(ini_raw)
             ini_version = ini.getProperty("Version","Version")
             
+
         if ini_version == current_version:
             echo " +-> version is up to date [",ini_version,"]"
             if(respond_to_caller):
                 iclient.privmsg(ievent.origin, "up to date (mine)[" & current_version & "] vs (online)[" & ini_version & "]")
+            if clientconnected:
+                client.close()
+                clientconnected = false
             return true
         elif(respond_to_caller):
             iclient.privmsg(ievent.origin, "attempting to update, cya")
@@ -44,13 +49,20 @@ proc updt_check*(respond_to_caller:bool = false, iclient:Irc, ievent:IrcEvent):b
                 createDir(tmpdir)
         except:
             echo " +-> failed to create temp dir"
+            if clientconnected:
+                client.close()
+                clientconnected = false
             return
         echo " +-> getting file"
 
         try:
             client.downloadFile("https://github.com/crackman2/irc_mcgee/raw/master/update/irc_mcgee.exe",tmpexe)
+            client.close()
         except:
             echo " +-> downloading file failed"
+            if clientconnected:
+                client.close()
+                clientconnected = false
             return
         
         if fileExists(tmpexe):
