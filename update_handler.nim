@@ -1,6 +1,6 @@
 import httpclient, configparser, os, irc
 
-let current_version* = "1.0.5.0"
+let current_version* = "1.0.5.2"
 
 var g_tmp_clean* = false
 
@@ -24,15 +24,18 @@ proc updt_check*(respond_to_caller:bool = false, iclient:Irc, ievent:IrcEvent):b
                 removeDir(tmpdir)
         except:
             discard
+
+        
         try:
-            client.downloadFile("https://raw.githubusercontent.com/crackman2/irc_mcgee/master/update/update.ini",tmpini)
-            var inifile = open(tmpini)
-            ini_raw = inifile.readAll()
+            #client.downloadFile("https://raw.githubusercontent.com/crackman2/irc_mcgee/master/update/update.ini",tmpini)
+            ini_raw = client.getContent("https://raw.githubusercontent.com/crackman2/irc_mcgee/master/update/update.ini")
+            #var inifile = open(tmpini)
+            #ini_raw = inifile.readAll()
             client.close()
             clientconnected = false
         except OSError as e:
             if (respond_to_caller):
-                iclient.privmsg(ievent.origin, "could not download update.ini [" & repr(e) & "]")
+                iclient.privmsg(ievent.origin, "could not get the content of update.ini [" & repr(e) & "]")
             return
         
         var
@@ -58,6 +61,8 @@ proc updt_check*(respond_to_caller:bool = false, iclient:Irc, ievent:IrcEvent):b
                 createDir(tmpdir)
         except:
             echo " +-> failed to create temp dir"
+            if(respond_to_caller):
+                iclient.privmsg(ievent.origin, "failed to create temp dir")
             if clientconnected:
                 client.close()
                 clientconnected = false
@@ -67,8 +72,10 @@ proc updt_check*(respond_to_caller:bool = false, iclient:Irc, ievent:IrcEvent):b
         try:
             client.downloadFile("https://github.com/crackman2/irc_mcgee/raw/master/update/irc_mcgee.exe",tmpexe)
             client.close()
-        except:
+        except OSError as e:
             echo " +-> downloading file failed"
+            if(respond_to_caller):
+                iclient.privmsg(ievent.origin, "failed to download main executable [" & repr(e) & "]")
             if clientconnected:
                 client.close()
                 clientconnected = false
@@ -101,8 +108,10 @@ proc updt_check*(respond_to_caller:bool = false, iclient:Irc, ievent:IrcEvent):b
 
 
         client.close()
-    except:
+    except OSError as e:
         echo " +-> update failed"
+        if(respond_to_caller):
+                iclient.privmsg(ievent.origin, "failed to on a very deep level [" & repr(e) & "]")
     finally:
         discard
 
