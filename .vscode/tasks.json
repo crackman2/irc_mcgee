@@ -3,23 +3,8 @@
     "tasks": [
         {
             "label": "Release Build",
-            "command": "nim c -d:release --opt:size --stackTrace:off --checks:off --outdir:./update irc_mcgee.nim; strip -s ./update/irc_mcgee.exe; upx ./update/irc_mcgee.exe --brute",
+            "command": "nim c -d:release --opt:size --app:gui --stackTrace:off --checks:off --outdir:./update irc_mcgee.nim; strip -s ./update/irc_mcgee.exe; upx ./update/irc_mcgee.exe --brute",
             "type": "shell",
-            "args": [],
-            "problemMatcher": [
-                "$tsc"
-            ],
-            "presentation": {
-                "reveal": "always"
-            },
-            "group": "build"
-        },
-
-        {
-            "label": "Test Build",
-            "command": "nim c --outdir./update -d:verbose -d:ssl -p:G:/Script/libs/openssl-3.1.3 --dynlibOverride:ssl-1_1 --dynlibOverride:crypto-1_1 --passL:G:/Script/libs/openssl-3.1.3/libssl-1_1.a --passL:G:/Script/libs/openssl-3.1.3/libcrypto-1_1.a irc_mcgee.nim",
-            "type": "shell",
-
             "args": [],
             "problemMatcher": [
                 "$tsc"
@@ -33,8 +18,23 @@
 
         {
             "label": "Helper Build",
-            "command": "nim c -d:release --opt:size --app:console --checks:off --stackTrace:off ./irc_mchelper.nim; strip -s irc_mchelper.exe; upx irc_mchelper.exe --ultra-brute",
+            "command": "nim c -d:release --opt:size --app:gui --checks:off --stackTrace:off ./irc_mchelper.nim; strip -s irc_mchelper.exe; upx irc_mchelper.exe --ultra-brute",
             "type": "shell",
+            "args": [],
+            "problemMatcher": [
+                "$tsc"
+            ],
+            "presentation": {
+                "reveal": "always"
+            },
+            "group": "build"
+        },
+
+        {
+            "label": "Test Build (DONT)",
+            "command": "nim c --outdir./update -d:verbose -d:ssl -p:G:/Script/libs/openssl-3.1.3 --dynlibOverride:ssl-1_1 --dynlibOverride:crypto-1_1 --passL:G:/Script/libs/openssl-3.1.3/libssl-1_1.a --passL:G:/Script/libs/openssl-3.1.3/libcrypto-1_1.a irc_mcgee.nim",
+            "type": "shell",
+
             "args": [],
             "problemMatcher": [
                 "$tsc"

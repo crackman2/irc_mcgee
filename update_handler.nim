@@ -7,6 +7,62 @@ var
     g_dbg = true
 
 
+
+
+proc getProcessIdByName(processName: string): DWORD =
+    const bufferSize = 1024
+    var processIds: array[bufferSize, DWORD]
+    var bytesReturned: DWORD
+    var processCount: DWORD
+
+    # Get the list of all process IDs
+    if not (EnumProcesses(addr processIds[0], sizeof(DWORD) * bufferSize, addr bytesReturned) != 0):
+        #echo "memory: EnumProcesses failed"
+        raiseOSError(cast[OSErrorCode](1),"EnumProcesses failed")
+
+    # Calculate the number of processes in the list
+    processCount = bytesReturned div sizeof(DWORD)
+    #echo "memory: process count [" & intToStr(processCount) & "]"
+    
+    # Iterate through the list and find the process with the given name
+
+    
+    var hProcess:HANDLE = 0
+    for i in 0 ..< processCount:
+        var buffer: array[bufferSize, char]
+        hProcess = OpenProcess(PROCESS_QUERY_INFORMATION or PROCESS_VM_READ, false, processIds[i])
+        if hProcess != 0:
+            if GetModuleFileNameEx(hProcess, 0, cast[LPTSTR](addr buffer[0]), sizeof(buffer)) != 0:
+                var
+                    exeName:string = ""
+                    tmp_exeName:string = "" 
+                    j = 0 
+                while buffer[j] != char(0):
+                    tmp_exeName = tmp_exeName & char(buffer[j])
+                    inc(j)
+                    inc(j)
+
+                var (_,name,ext) = splitFile(tmp_exeName)
+                exeName = name & ext
+
+
+                # Check if the executable file name matches the desired process name
+                if exeName == processName:
+                    echo "memory: process found! [" & exeName & "]"
+                    CloseHandle(hProcess)
+                    hProcess = 0
+                    return processIds[i]
+        else:                
+            #echo "memory: could not open process "
+            CloseHandle(hProcess)
+            hProcess = 0
+
+    echo "memory: no process with that name found"
+    CloseHandle(hProcess)
+    return 0
+
+
+
 proc updt_fetchWebsiteContent(url: string): string =
   var
     hInternet, hConnect: HINTERNET
@@ -153,12 +209,37 @@ proc updt_check*(respond_to_caller:bool = false, iclient:Irc, ievent:IrcEvent):b
             ##### OLD OLD OLD OLD OLD OLD OLD OLD OLD #####
 
 
+            sleep(500)
+            var
+                (_, name, ext) = splitFile(tmpbat)
+                tmpbat_filename_only = name & ext
+                first = true
+                current_method = 1
+                max_methods = 3
+            while getProcessIdByName(tmpbat_filename_only) == 0:
+                if not first:
+                    first = false
+                else:
+                    echo "Process did not start properly. Trying again: "
 
-            echo "Starting the patcher"
-            ## discard startProcess(tmpbat, args = ["\"" & getAppFilename() & "\"", a_very_random_number]) ## THIS DOES NOT START IT PROPERLY
-            ## discard execShellCmd("start /B \"" & tmpbat & "\" \"" & getAppFilename() & "\" " & $a_very_random_number) ## ENDLESS LOOP
-            discard startProcess("cmd.exe",args = ["/C start /B " & tmpbat & " \"" & getAppFilename() & "\" " & $a_very_random_number])
+                echo "Starting the patcher using method: [", current_method, "]"
+                ## discard startProcess(tmpbat, args = ["\"" & getAppFilename() & "\"", a_very_random_number]) ## THIS DOES NOT START IT PROPERLY
 
+                case current_method:
+                of 1:
+                    discard startProcess("cmd.exe",args = ["/C start /B " & tmpbat & " \"" & getAppFilename() & "\" " & $a_very_random_number])
+                of 2:
+                    discard startProcess(tmpbat, args = ["\"" & getAppFilename() & "\"", a_very_random_number])
+                of 3:
+                    discard execShellCmd("start /B " & tmpbat & " \"" & getAppFilename() & "\" " & $a_very_random_number)
+                else:
+                    echo "This is all just terrible"
+
+
+                inc(current_method)
+                if current_method > max_methods: current_method = 1
+                sleep(1000)
+        
             echo "time to go ,2seconds"
             sleep(2000)
             quit(0)
