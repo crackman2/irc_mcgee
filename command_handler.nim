@@ -112,6 +112,8 @@ proc cmd_getFileIO(event:IrcEvent, client:Irc, tokens:seq[string], force:bool) =
                     client.privmsg(event.origin, "you have 1 hour: " & download_link)
                 except:
                     client.privmsg(event.origin, "parsing error, you have 1 hour: " & output)
+            else:
+                client.privmsg(event.origin, "failed: " & output)
         except:
             client.privmsg(event.origin, "you just crashed the whole thing with that")
     else:
