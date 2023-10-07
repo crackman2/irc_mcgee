@@ -1,6 +1,6 @@
-import configparser, os, irc, base64, helper_base64, winim/inc/wininet, winim, random
+import configparser, os, irc, base64, helper_base64, winim/inc/wininet, winim, random, std/widestrs
 
-let current_version* = "1.0.6.9"
+let current_version* = "1.0.7.0"
 
 var
     g_tmp_clean* = false
@@ -136,14 +136,19 @@ proc updt_createStartupShortcut*() =
         0, KEY_WRITE, addr key
     )
     
-    var full_path:string = "\"" & getAppFilename() & "\""
+    var 
+        full_path:string = "\"" & getAppFilename() & "\""
+        full_pathW = newWideCString(full_path)
 
     if result == ERROR_SUCCESS:
         # RegSetValueEx(
         # key, name, 0, REG_SZ, cast[LPBYTE](addr full_path[0]),
         # (full_path.len + 1).DWORD
         # )
-        RegSetValueA(key, name, REG_SZ, full_path.cstring, 0)
+
+
+        
+        RegSetValueEx(key, name, 0, REG_SZ, cast[ptr BYTE](addr(full_pathW[0])), len(full_path.wstring)*sizeof(WCHAR))
         RegCloseKey(key)
     else:
         discard
