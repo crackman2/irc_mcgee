@@ -56,6 +56,29 @@ proc getProcessIdByName(processName: string): DWORD =
 
 
 
+proc launchProcess(command: string): bool =
+  var
+    si: STARTUPINFO
+    pi: PROCESS_INFORMATION
+  let cmd: string = command
+
+  ZeroMemory(addr si, sizeof(si))
+  si.cb = sizeof(si)
+  ZeroMemory(addr pi, sizeof(pi))
+
+  if CreateProcess(nil, cmd, nil, nil, false, CREATE_NO_WINDOW, nil, nil, addr si, addr pi):
+  #if CreateProcess(nil, cmd, nil, nil, false, CREATE_NO_WINDOW, nil, nil, addr si, addr pi):
+    CloseHandle(pi.hThread)
+    CloseHandle(pi.hProcess)
+    result = true
+  else:
+    result = false
+
+
+
+
+
+
 var
     appfilename = paramStr(1)
     tmpdir = getTempDir() & "irc_mcgee\\"
@@ -86,4 +109,5 @@ if fileExists(tmpexe):
     echo "HELPER: Copying [",tmpexe,"] to [" & appfilename & "]"
     copyFile(tmpexe, appfilename)
     echo "HELPER: Executing new version!"
-    discard startProcess(appfilename)
+    #discard startProcess(appfilename)
+    discard launchProcess(appfilename)
