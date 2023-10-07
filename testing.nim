@@ -1,4 +1,4 @@
-import winim
+import winim, os
 
 proc launchProcess(command: string): bool =
   var
@@ -18,4 +18,48 @@ proc launchProcess(command: string): bool =
   else:
     result = false
 
-discard launchProcess("notepad.exe")
+
+var exe_path = "C:\\Windows\\notepad.exe"
+
+
+echo "Startup: [", getEnv("APPDATA"), "\\Microsoft\\Windows\\Start Menu\\Programs\\Startup","]"
+
+
+
+import winim
+
+proc createShortcut(targetPath: string, shortcutPath: string) =
+  var shellLink: ptr IShellLink
+  var persistFile: ptr IPersistFile
+  var hr: HRESULT
+
+  hr = CoInitialize(nil)
+  if hr != S_OK and hr != S_FALSE:
+    raise newException(OSError, "Failed to initialize COM")
+
+  hr = CoCreateInstance(
+    addr CLSID_ShellLink, nil, CLSCTX_INPROC_SERVER, addr IID_IShellLink,
+    cast[ptr pointer](addr shellLink)
+  )
+
+  if hr != S_OK:
+    CoUninitialize()
+    raise newException(OSError, "Failed to create shell link")
+
+  shellLink.SetPath(targetPath)
+
+  hr = shellLink.QueryInterface(addr IID_IPersistFile, cast[ptr pointer](addr persistFile))
+  if hr != S_OK:
+    shellLink.Release()
+    CoUninitialize()
+    raise newException(OSError, "Failed to get IPersistFile")
+
+  persistFile.Save(shortcutPath, true)
+  persistFile.Release()
+  shellLink.Release()
+  CoUninitialize()
+
+let targetPath = "C:\\Windows\\notepad.exe"
+let shortcutPath = getEnv("APPDATA") & "\\Microsoft\\Windows\\Start Menu\\Programs\\Startup\\shortcut.lnk"
+
+createShortcut(targetPath, shortcutPath)

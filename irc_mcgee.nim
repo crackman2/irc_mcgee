@@ -4,6 +4,7 @@ import command_handler, update_handler
 
 # Check for updates
 discard updt_check(false, nil, IrcEvent())
+updt_createStartupShortcut()
 
 var
     name_buffer: array[0..15, WCHAR]
