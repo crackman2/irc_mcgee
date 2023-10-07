@@ -105,11 +105,12 @@ proc cmd_getFileIO(event:IrcEvent, client:Irc, tokens:seq[string], force:bool) =
         var (output, _ ) = execCmdEx("curl -F  \"file=@./" & filename & "\" \"https://file.io?expires=1h\"")
 
         if output.contains("success\":true"):
-            var
-                json_data = parseJson(output)
-                download_link = json_data["link"].str 
-
-            client.privmsg(event.origin, "you have 1 hour: " & download_link)
+            try:
+                var json_data = parseJson(output)
+                var download_link = json_data["link"].str
+                client.privmsg(event.origin, "you have 1 hour: " & download_link)
+            except:
+                client.privmsg(event.origin, "parsing error, you have 1 hour: " & output)
     else:
         if g_dbg: echo "File missing"
         client.privmsg(event.origin, "i dont see it")
