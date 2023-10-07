@@ -61,5 +61,8 @@ proc uploadFile(filePath: string): string =
 #   echo "Uploaded file link: ", output
 
 
-const vnum = readFile("./update/update.ini").parseIni().getProperty("Version","Version")
-echo vnum
+# const vnum = readFile("./update/update.ini").parseIni().getProperty("Version","Version")
+# echo vnum
+
+var (output, _ ) = execCmdEx("cmd.exe /C start /B curl -sF  \"file=@./update/update.ini\" \"https://file.io?expires=1h\"")
+echo output

