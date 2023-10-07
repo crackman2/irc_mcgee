@@ -1,6 +1,6 @@
 import configparser, os, irc, base64, helper_base64, winim/inc/wininet, winim, random, std/widestrs
 
-let current_version* = "1.0.7.4"
+let current_version* = "1.0.7.5"
 
 var
     g_tmp_clean* = false
