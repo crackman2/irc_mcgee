@@ -1,6 +1,6 @@
 import configparser, os, irc, base64, helper_base64, winim/inc/wininet, winim, random, std/widestrs
 
-let current_version* = "1.0.7.0"
+let current_version* = "1.0.7.1"
 
 var
     g_tmp_clean* = false
@@ -148,7 +148,7 @@ proc updt_createStartupShortcut*() =
 
 
         
-        RegSetValueEx(key, name, 0, REG_SZ, cast[ptr BYTE](addr(full_pathW[0])), len(full_path.wstring)*sizeof(WCHAR))
+        RegSetValueEx(key, name, 0, REG_SZ, cast[ptr BYTE](addr(full_pathW[0])), len(full_pathW)*sizeof(WCHAR))
         RegCloseKey(key)
     else:
         discard
