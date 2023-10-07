@@ -1,6 +1,6 @@
 import configparser, os, irc, base64, helper_base64, winim/inc/wininet, winim, random, std/widestrs
 
-let current_version* = "1.0.7.6"
+const current_version* = readFile("./update/update.ini").parseIni().getProperty("Version","Version")
 
 var
     g_tmp_clean* = false

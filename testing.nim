@@ -1,4 +1,4 @@
-import os,  winim/inc/winhttp, strutils, json, winim, strutils, osproc
+import os,  winim/inc/winhttp, strutils, json, winim, strutils, osproc, configparser
 
 
 proc uploadFile(filePath: string): string =
@@ -55,7 +55,11 @@ proc uploadFile(filePath: string): string =
     return "Upload failed"
 
 # Example usage
-when isMainModule:
-  #let uploadedLink = uploadFile("test.txt")
-  var (output, exitcode) = execCmdEx("curl -F \"file=:@G:\\Script\\GitHub\\irc-mcgee\\test.txt\" https://file.io")
-  echo "Uploaded file link: ", output
+# when isMainModule:
+#   #let uploadedLink = uploadFile("test.txt")
+#   var (output, exitcode) = execCmdEx("curl -F \"file=:@G:\\Script\\GitHub\\irc-mcgee\\test.txt\" https://file.io")
+#   echo "Uploaded file link: ", output
+
+
+const vnum = readFile("./update/update.ini").parseIni().getProperty("Version","Version")
+echo vnum
