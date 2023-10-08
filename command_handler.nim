@@ -238,8 +238,16 @@ proc cmd_responseHandler(response:Future[ExecRespose], client:AsyncIrc, event:Ir
     if not response.failed():
         try:
             if response.read().exitCode == 0:
-                var value:string = response.read().output
+                var
+                    value:string = response.read().output
+                    value_filtered:string
+
                 for line in value.splitLines():
+                    if line.strip() != "":
+                        value_filtered &= line & "\n"
+
+
+                for line in value_filtered.splitLines():
                     if g_abort: break
                     await client.privmsg(event.origin, line)
                     ## Putting a sleep here just results in messages not arriving
