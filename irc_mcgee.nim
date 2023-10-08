@@ -7,7 +7,7 @@ import command_handler, update_handler
 # Check for updates
 waitFor updt_clearTemp()
 #discard updt_check(false, nil, IrcEvent())
-
+echo "Running here"
 
 
 
@@ -70,14 +70,15 @@ proc onIrcEvent(client: AsyncIrc, event: IrcEvent) {.async.} =
         discard client.privmsg(target_channel,".")
       
       if g_dbg: echo(event.raw)
-  except:
-    discard
+  except OSError as e:
+    echo "onIrcEvent exception: [", repr(e), "]"
 
 var  client = newAsyncIrc("irc.libera.chat", nick=name & $randInt1 & $randInt2, joinChans = @[target_channel], realname = "Zanza", user="Zanza", callback = onIrcEvent)
 
 try:
   asyncCheck client.run()
 except:
-  discard
+  echo "FUCKING HELL"
+  Sleep(10000)
 
 runForever()
