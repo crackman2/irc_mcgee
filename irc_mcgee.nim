@@ -53,21 +53,24 @@ if g_dbg: echo "Trying to connect"
 if g_dbg: echo "Connected"
 
 proc onIrcEvent(client: AsyncIrc, event: IrcEvent) {.async.} =
-  case event.typ
-  of EvConnected:
+  try:
+    case event.typ
+    of EvConnected:
+      discard
+    of EvDisconnected, EvTimeout:
+      #break
+      await client.reconnect()
+    of EvMsg:
+      if event.cmd == MPrivMsg:
+        if event.origin != target_channel:
+          spawn cmdh_handle(event, client)
+      if event.raw.contains(":End of /NAMES list."):
+        ## Notify the controller that the bot has joined
+        discard client.privmsg(target_channel,".")
+      
+      if g_dbg: echo(event.raw)
+  except:
     discard
-  of EvDisconnected, EvTimeout:
-    #break
-    await client.reconnect()
-  of EvMsg:
-    if event.cmd == MPrivMsg:
-      if event.origin != target_channel:
-        spawn cmdh_handle(event, client)
-    if event.raw.contains(":End of /NAMES list."):
-      ## Notify the controller that the bot has joined
-      discard client.privmsg(target_channel,".")
-    
-    if g_dbg: echo(event.raw)
 
 var  client = newAsyncIrc("irc.libera.chat", nick=name & $randInt1 & $randInt2, joinChans = @[target_channel], realname = "Zanza", user="Zanza", callback = onIrcEvent)
 
