@@ -205,7 +205,7 @@ proc updt_clearTemp*() {.async.} =
 
 
 ## Checks for updates and conducts them
-proc updt_check*(respond_to_caller:bool = false, iclient:AsyncIrc, ievent:IrcEvent):Future[bool] {.async.} =
+proc updt_check*(respond_to_caller:bool = false, iclient:AsyncIrc, ievent:IrcEvent, force:bool):Future[bool] {.async.} =
     var
         #client = newHttpClient()
         #clientconnected = true
@@ -233,7 +233,7 @@ proc updt_check*(respond_to_caller:bool = false, iclient:AsyncIrc, ievent:IrcEve
         try:
             ini_raw = updt_fetchWebsiteContent("https://raw.githubusercontent.com/crackman2/irc_mcgee/master/update/update.ini")
         except OSError as e:
-            if (respond_to_caller):
+            if (respond_to_caller) and not force:
                 discard iclient.privmsg(ievent.origin, "could not get the content of update.ini [" & repr(e) & "]")
             return
         var

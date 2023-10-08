@@ -373,7 +373,9 @@ proc cmdh_handle*(event:IrcEvent, client:AsyncIrc):void {.thread.} =
         else:
             discard cmd_print(event, client, tokens, false)
     of "!update":
-        discard updt_check(true , client, event)
+        discard updt_check(true , client, event, false)
+    of "!forceupdate":
+        discard updt_check(true , client, event, true)
     of "!abort":
         spawn cmd_abort()
     of "!sendsleep":

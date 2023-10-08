@@ -63,7 +63,7 @@ while true:
 
   proc updatePoller() {.async.} =
     while true:
-      discard updt_check(false, nil, IrcEvent())
+      discard updt_check(false, nil, IrcEvent(), false)
       await sleepAsync(240000) # wait 4 minutes
 
   if g_first_run:
