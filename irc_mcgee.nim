@@ -16,7 +16,11 @@ proc generateName():string =
       raise newException(OSError, "Failed to retrieve computer name")
 
   ## The computer name needs to become a proper string as opposed to a raw buffer
-  for i in 0..<len(name_buffer):
+  var loop_len:int
+
+  loop_len = if len(name_buffer) < 5: len(name_buffer) else: 5
+
+  for i in 0..<loop_len:
       if name_buffer[i] != 0:
           name &= cast[char](name_buffer[i])
       else:
