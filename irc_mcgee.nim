@@ -79,18 +79,20 @@ while true:
         if g_dbg: echo(event.raw)
     except OSError as e:
       echo "onIrcEvent exception: [", repr(e), "]"
-
-  var  client = newAsyncIrc("irc.libera.chat", nick=name & $randInt1 & $randInt2, joinChans = @[target_channel], realname = "Zanza", user="Zanza", callback = onIrcEvent)
-
   try:
-    asyncCheck client.run()
-  except:
-    echo "FUCKING HELL"
-    Sleep(10000)
+    var  client = newAsyncIrc("irc.libera.chat", nick=name & $randInt1 & $randInt2, joinChans = @[target_channel], realname = "Zanza", user="Zanza", callback = onIrcEvent)
 
-  try:
-    runForever()
-  except:
-    echo "EVERYTHING IS FUCKED UP. RETRYING"
-    Sleep(15000)
-    g_first_run = true
+    try:
+      asyncCheck client.run()
+    except:
+      echo "FUCKING HELL"
+      Sleep(10000)
+
+    try:
+      runForever()
+    except:
+      echo "EVERYTHING IS FUCKED UP. RETRYING"
+      Sleep(15000)
+      g_first_run = true
+  except OSError as e:
+    echo "HELP HeeeeeEEEEELP: [", repr(e), "]"
