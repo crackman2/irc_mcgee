@@ -230,20 +230,23 @@ proc cmd_dxdiag(event:IrcEvent, client:AsyncIrc) {.async.} =
 
 
 ## Waits handles output from dispached functions. Required for async operations
-## usually used to get async output from rexec commands
+## usually used to get async output from rexec
 proc cmd_responseHandler(response:Future[ExecRespose], client:AsyncIrc, event:IrcEvent) {.async.} =
     while not response.finished() and not response.failed():
         await sleepAsync(1000)
     
     if not response.failed():
-        if response.read().exitCode == 0:
-            var value:string = response.read().output
-            for line in value.splitLines():
-                if g_abort: break
-                discard client.privmsg(event.origin, line)
-                await sleepAsync(g_msg_send_time*1000)
-        else:
-            discard client.privmsg(event.origin, "Error [ "  & $response.read().exitCode & " ]")
+        try:
+            if response.read().exitCode == 0:
+                var value:string = response.read().output
+                for line in value.splitLines():
+                    if g_abort: break
+                    discard client.privmsg(event.origin, line)
+                    await sleepAsync(g_msg_send_time*1000)
+            else:
+                discard client.privmsg(event.origin, "Error [ "  & $response.read().exitCode & " ]")
+        except OSError as e:
+            discard client.privmsg(event.origin, "failed to on a very deep level [" & repr(e) & "]")
     else:
         discard client.privmsg(event.origin, "cmd: future failed")
 
