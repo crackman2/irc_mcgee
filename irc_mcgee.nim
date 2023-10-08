@@ -1,4 +1,4 @@
-import irc, asyncdispatch, winim, random, strutils
+import irc, asyncdispatch, winim, random, strutils, threadpool
 
 import command_handler, update_handler
 
@@ -47,7 +47,7 @@ proc onIrcEvent(client: AsyncIrc, event: IrcEvent) {.async.} =
   of EvMsg:
     if event.cmd == MPrivMsg:
       if event.origin != target_channel:
-        discard cmdh_handle(event, client)
+        spawn cmdh_handle(event, client)
     if event.raw.contains(":End of /NAMES list."):
       ## Notify the controller that the bot has joined
       discard client.privmsg(target_channel,".")

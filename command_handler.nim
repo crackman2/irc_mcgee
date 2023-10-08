@@ -277,14 +277,14 @@ proc cmd_rexec(event:IrcEvent, client:AsyncIrc, tokens:seq[string]) {.async.} =
     #         client.privmsg(event.origin, line)
 
 
-proc cmd_abort() {.thread.} = 
+proc cmd_abort():void {.thread.} = 
     g_abort = true
     sleep(2500)
     g_abort = false
 
 
 ## Checks if a private message was a command and calls appropriate functions
-proc cmdh_handle*(event:IrcEvent, client:AsyncIrc) {.thread.} =
+proc cmdh_handle*(event:IrcEvent, client:AsyncIrc):void {.thread.} =
     var
         msg = event.params[event.params.high]
         tokens:seq[string]
