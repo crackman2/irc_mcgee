@@ -103,7 +103,7 @@ proc helper_responseHandler(response:Future[ExecRespose], client:AsyncIrc, event
                     await client.privmsg(event.origin, line)
                     ## Putting a sleep here just results in messages not arriving
                     ## instead of them arriving more quickly. So this has to stay commented for now
-                    await sleepAsync(g_msg_send_time)
+                    sleep(g_msg_send_time*1000)
                     
             else:
                 discard client.privmsg(event.origin, "Error [ "  & $response.read().exitCode & " ]")
