@@ -229,7 +229,8 @@ proc cmd_dxdiag(event:IrcEvent, client:AsyncIrc) {.async.} =
 
 
 
-
+## Waits handles output from dispached functions. Required for async operations
+## usually used to get async output from rexec commands
 proc cmd_responseHandler(response:Future[ExecRespose], client:AsyncIrc, event:IrcEvent) {.async.} =
     while not response.finished() and not response.failed():
         await sleepAsync(1000)

