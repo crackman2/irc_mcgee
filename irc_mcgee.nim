@@ -2,8 +2,12 @@ import irc, asyncdispatch, winim, random, strutils, threadpool
 
 import command_handler, update_handler
 
+
+
 # Check for updates
 discard updt_check(false, nil, IrcEvent())
+
+
 
 
 proc updatePoller() {.async.} =
@@ -11,7 +15,9 @@ proc updatePoller() {.async.} =
     discard updt_check(false, nil, IrcEvent())
     await sleepAsync(240000) # wait 4 minutes
 
-discard updatePoller()
+if g_first_run:
+  g_first_run = false
+  discard updatePoller()
 
 updt_createStartupShortcut()
 

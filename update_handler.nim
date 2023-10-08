@@ -6,6 +6,7 @@ const current_version* = readFile("./update/update.ini").parseIni().getProperty(
 var
     g_tmp_clean* = false
     g_dbg = true
+    g_first_run* = true
 
 
 ## Silently launches a process
