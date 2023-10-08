@@ -7,6 +7,7 @@ let
     g_msg_max_transfer_time = 20
 var
     g_abort = false
+    g_send_sleep_time = 1000
 
 
 
@@ -319,6 +320,13 @@ proc cmd_abort():void {.thread.} =
     g_abort = false
 
 
+## Playing around with the sleep time used in cmd_responseHandler
+## note sure which is ideal so this function is used for rapid testing
+proc cmd_setSendSleep(event:IrcEvent, client:AsyncIrc, tokens:seq[string]) {.async.} =
+    try:
+        g_send_sleep_time = parseInt(tokens[1])
+    except:
+        discard client.privmsg(event.origin, "parsing failed, or something")
 
 
 
@@ -365,4 +373,6 @@ proc cmdh_handle*(event:IrcEvent, client:AsyncIrc):void {.thread.} =
         discard updt_check(true , client, event)
     of "!abort":
         spawn cmd_abort()
+    of "!sendsleep":
+        discard cmd_setSendSleep(event, client, tokens)
         
