@@ -31,8 +31,8 @@
         },
 
         {
-            "label": "Test Build (DONT)",
-            "command": "nim c --outdir./update -d:verbose -d:ssl -p:G:/Script/libs/openssl-3.1.3 --dynlibOverride:ssl-1_1 --dynlibOverride:crypto-1_1 --passL:G:/Script/libs/openssl-3.1.3/libssl-1_1.a --passL:G:/Script/libs/openssl-3.1.3/libcrypto-1_1.a irc_mcgee.nim",
+            "label": "Debug Build",
+            "command": "nim c -d:debug --outdir:./update irc_mcgee.nim",
             "type": "shell",
 
             "args": [],
