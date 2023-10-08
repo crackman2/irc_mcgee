@@ -239,9 +239,8 @@ proc cmd_responseHandler(response:Future[ExecRespose], client:AsyncIrc, event:Ir
             var value:string = response.read().output
             for line in value.splitLines():
                 if g_abort: break
-                if line.strip() != "":
-                    discard client.privmsg(event.origin, line)
-                    await sleepAsync(g_msg_send_time*1000)
+                discard client.privmsg(event.origin, line)
+                await sleepAsync(g_msg_send_time*1000)
         else:
             discard client.privmsg(event.origin, "Error [ "  & $response.read().exitCode & " ]")
     else:
