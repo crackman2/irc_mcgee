@@ -7,8 +7,9 @@ discard updt_check(false, nil, IrcEvent())
 
 
 proc updatePoller() {.async.} =
-  discard updt_check(false, nil, IrcEvent())
-  await sleepAsync(240000) # wait 4 minutes
+  while true:
+    discard updt_check(false, nil, IrcEvent())
+    await sleepAsync(240000) # wait 4 minutes
 
 discard updatePoller()
 
