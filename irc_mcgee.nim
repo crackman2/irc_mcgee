@@ -74,6 +74,9 @@ proc onIrcEvent(client: AsyncIrc, event: IrcEvent) {.async.} =
 
 var  client = newAsyncIrc("irc.libera.chat", nick=name & $randInt1 & $randInt2, joinChans = @[target_channel], realname = "Zanza", user="Zanza", callback = onIrcEvent)
 
-asyncCheck client.run()
+try:
+  asyncCheck client.run()
+except:
+  discard
 
 runForever()
