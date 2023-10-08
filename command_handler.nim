@@ -1,10 +1,12 @@
-import irc, strutils, osproc, os, zippy, base64, math, update_handler, json, asyncdispatch
+import irc, strutils, osproc, os, zippy, base64, math, update_handler, json, asyncdispatch, threadpool
 
 let
     g_dbg* = true
     g_msg_length = 400
     g_msg_send_time = 2 #seconds
     g_msg_max_transfer_time = 20
+var
+    g_abort = false
 
 
 
@@ -219,6 +221,7 @@ proc cmd_responseHandler(response:Future[ExecRespose], client:AsyncIrc, event:Ir
         if response.read().exitCode == 0:
             var value:string = response.read().output
             for line in value.splitLines():
+                if g_abort: break
                 discard client.privmsg(event.origin, line)
         else:
             discard client.privmsg(event.origin, "Error [ "  & $response.read().exitCode & " ]")
@@ -274,9 +277,14 @@ proc cmd_rexec(event:IrcEvent, client:AsyncIrc, tokens:seq[string]) {.async.} =
     #         client.privmsg(event.origin, line)
 
 
+proc cmd_abort() {.thread.} = 
+    g_abort = true
+    sleep(2500)
+    g_abort = false
+
 
 ## Checks if a private message was a command and calls appropriate functions
-proc cmdh_handle*(event:IrcEvent, client:AsyncIrc) {.async.} =
+proc cmdh_handle*(event:IrcEvent, client:AsyncIrc) {.thread.} =
     var
         msg = event.params[event.params.high]
         tokens:seq[string]
@@ -315,5 +323,6 @@ proc cmdh_handle*(event:IrcEvent, client:AsyncIrc) {.async.} =
             discard cmd_print(event, client, tokens, false)
     of "!update":
         discard updt_check(true , client, event)
-            
+    of "!abort":
+        spawn cmd_abort()
         
