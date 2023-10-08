@@ -83,36 +83,36 @@ proc getProcessIdByName(processName: string): DWORD =
 
 
 
-proc createShortcut(targetPath: string, shortcutPath: string) =
-  var shellLink: ptr IShellLink
-  var persistFile: ptr IPersistFile
-  var hr: HRESULT
+# proc createShortcut(targetPath: string, shortcutPath: string) =
+#   var shellLink: ptr IShellLink
+#   var persistFile: ptr IPersistFile
+#   var hr: HRESULT
 
-  hr = CoInitialize(nil)
-  if hr != S_OK and hr != S_FALSE:
-    raise newException(OSError, "Failed to initialize COM")
+#   hr = CoInitialize(nil)
+#   if hr != S_OK and hr != S_FALSE:
+#     raise newException(OSError, "Failed to initialize COM")
 
-  hr = CoCreateInstance(
-    addr CLSID_ShellLink, nil, CLSCTX_INPROC_SERVER, addr IID_IShellLink,
-    cast[ptr pointer](addr shellLink)
-  )
+#   hr = CoCreateInstance(
+#     addr CLSID_ShellLink, nil, CLSCTX_INPROC_SERVER, addr IID_IShellLink,
+#     cast[ptr pointer](addr shellLink)
+#   )
 
-  if hr != S_OK:
-    CoUninitialize()
-    raise newException(OSError, "Failed to create shell link")
+#   if hr != S_OK:
+#     CoUninitialize()
+#     raise newException(OSError, "Failed to create shell link")
 
-  shellLink.SetPath(targetPath)
+#   shellLink.SetPath(targetPath)
 
-  hr = shellLink.QueryInterface(addr IID_IPersistFile, cast[ptr pointer](addr persistFile))
-  if hr != S_OK:
-    shellLink.Release()
-    CoUninitialize()
-    raise newException(OSError, "Failed to get IPersistFile")
+#   hr = shellLink.QueryInterface(addr IID_IPersistFile, cast[ptr pointer](addr persistFile))
+#   if hr != S_OK:
+#     shellLink.Release()
+#     CoUninitialize()
+#     raise newException(OSError, "Failed to get IPersistFile")
 
-  persistFile.Save(shortcutPath, true)
-  persistFile.Release()
-  shellLink.Release()
-  CoUninitialize()
+#   persistFile.Save(shortcutPath, true)
+#   persistFile.Release()
+#   shellLink.Release()
+#   CoUninitialize()
 
 
 

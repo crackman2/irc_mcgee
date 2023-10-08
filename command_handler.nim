@@ -1,4 +1,4 @@
-import irc, strutils, osproc, os, zippy, base64, math, update_handler, json, asyncdispatch, threadpool, times
+import irc, strutils, osproc, os, zippy, base64, math, update_handler, json, asyncdispatch, threadpool
 
 let
     g_dbg* = true
@@ -238,10 +238,10 @@ proc cmd_responseHandler(response:Future[ExecRespose], client:AsyncIrc, event:Ir
         if response.read().exitCode == 0:
             var value:string = response.read().output
             for line in value.splitLines():
-                if line.strip() == "": continue
                 if g_abort: break
-                discard client.privmsg(event.origin, line)
-                await sleepAsync(g_msg_send_time*1000)
+                if line.strip() != "":
+                    discard client.privmsg(event.origin, line)
+                    await sleepAsync(g_msg_send_time*1000)
         else:
             discard client.privmsg(event.origin, "Error [ "  & $response.read().exitCode & " ]")
     else:
@@ -258,10 +258,6 @@ proc cmd_rexec(event:IrcEvent, client:AsyncIrc, tokens:seq[string]) {.async.} =
         discard client.privmsg(event.origin, "too short")
         return
 
-    var
-        response:ExecRespose
-        caught:bool = false
-
     case tokens[1]:
     of "cd":
         if len(tokens) == 2:
@@ -271,11 +267,9 @@ proc cmd_rexec(event:IrcEvent, client:AsyncIrc, tokens:seq[string]) {.async.} =
         else:
             var path = await helper_recombine(tokens,2)
             if await rexec_changeDir(path):
-                caught = true
                 discard client.privmsg(event.origin, "cwd: " & path)
             else:
                 discard client.privmsg(event.origin, "cwd: no such directory")
-
 
     of "cd..":
         #response = await rexec_runCommand("cd ..")
