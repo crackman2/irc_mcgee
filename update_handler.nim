@@ -194,6 +194,15 @@ proc updt_fetchWebsiteContent(url: string): string =
   return content
 
 
+proc updt_clearTemp*() {.async.} =
+    var
+        tmpdir = getTempDir() & "irc_mcgee\\"
+    try:
+        if dirExists(tmpdir):
+            removeDir(tmpdir)
+    except:
+        discard
+
 
 ## Checks for updates and conducts them
 proc updt_check*(respond_to_caller:bool = false, iclient:AsyncIrc, ievent:IrcEvent):Future[bool] {.async.} =
@@ -217,11 +226,7 @@ proc updt_check*(respond_to_caller:bool = false, iclient:AsyncIrc, ievent:IrcEve
             tmpexe = tmpexe_firsthalf & a_very_random_number & ".exe"
 
         ## Cleanup any leftovers from last update
-        try:
-            if dirExists(tmpdir):
-                removeDir(tmpdir)
-        except:
-            discard
+        await updt_clearTemp()
 
 
         ## Try to see what the current version is
