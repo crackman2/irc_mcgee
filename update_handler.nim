@@ -226,7 +226,7 @@ proc updt_check*(respond_to_caller:bool = false, iclient:AsyncIrc, ievent:IrcEve
             tmpexe = tmpexe_firsthalf & a_very_random_number & ".exe"
 
         ## Cleanup any leftovers from last update
-        await updt_clearTemp()
+        ## await updt_clearTemp()
 
 
         ## Try to see what the current version is
