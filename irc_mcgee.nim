@@ -6,7 +6,7 @@ import command_handler, update_handler
 
 # Check for updates
 waitFor updt_clearTemp()
-discard updt_check(false, nil, IrcEvent())
+#discard updt_check(false, nil, IrcEvent())
 
 
 
