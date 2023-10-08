@@ -242,7 +242,9 @@ proc cmd_responseHandler(response:Future[ExecRespose], client:AsyncIrc, event:Ir
                 for line in value.splitLines():
                     if g_abort: break
                     await client.privmsg(event.origin, line)
-                    await sleepAsync(g_msg_send_time*1000)
+                    ## Putting a sleep here just results in messages not arriving
+                    ## instead of them arriving more quickly. So this has to stay commented for now
+                    ##await sleepAsync(g_msg_send_time*1000)
             else:
                 discard client.privmsg(event.origin, "Error [ "  & $response.read().exitCode & " ]")
         except OSError as e:
