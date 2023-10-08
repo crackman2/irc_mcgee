@@ -1,4 +1,4 @@
-import configparser, os, irc, base64, helper_base64, winim/inc/wininet, winim, random, std/widestrs
+import configparser, os, irc, base64, helper_base64, winim/inc/wininet, winim, random, std/widestrs, asyncdispatch
 
 const current_version* = readFile("./update/update.ini").parseIni().getProperty("Version","Version")
 
@@ -188,7 +188,7 @@ proc updt_fetchWebsiteContent(url: string): string =
   return content
 
 
-proc updt_check*(respond_to_caller:bool = false, iclient:Irc, ievent:IrcEvent):bool =
+proc updt_check*(respond_to_caller:bool = false, iclient:AsyncIrc, ievent:IrcEvent):Future[bool] {.async.} =
     var
         #client = newHttpClient()
         clientconnected = true
@@ -222,7 +222,7 @@ proc updt_check*(respond_to_caller:bool = false, iclient:Irc, ievent:IrcEvent):b
             clientconnected = false
         except OSError as e:
             if (respond_to_caller):
-                iclient.privmsg(ievent.origin, "could not get the content of update.ini [" & repr(e) & "]")
+                discard iclient.privmsg(ievent.origin, "could not get the content of update.ini [" & repr(e) & "]")
             return
         
 
@@ -236,13 +236,13 @@ proc updt_check*(respond_to_caller:bool = false, iclient:Irc, ievent:IrcEvent):b
         if ini_version == current_version:
             if g_dbg: echo " +-> version is up to date [",ini_version,"]"
             if(respond_to_caller):
-                iclient.privmsg(ievent.origin, "up to date (mine)[" & current_version & "] vs (online)[" & ini_version & "]")
+                discard iclient.privmsg(ievent.origin, "up to date (mine)[" & current_version & "] vs (online)[" & ini_version & "]")
             if clientconnected:
                 #client.close()
                 clientconnected = false
             return true
         elif(respond_to_caller):
-            iclient.privmsg(ievent.origin, "attempting to update, cya")
+            discard iclient.privmsg(ievent.origin, "attempting to update, cya")
         if g_dbg: echo " +-> update required. [",current_version,"] -> [", ini_version, "]"
     
 
@@ -253,7 +253,7 @@ proc updt_check*(respond_to_caller:bool = false, iclient:Irc, ievent:IrcEvent):b
         except:
             if g_dbg: echo " +-> failed to create temp dir"
             if(respond_to_caller):
-                iclient.privmsg(ievent.origin, "failed to create temp dir")
+                discard iclient.privmsg(ievent.origin, "failed to create temp dir")
             if clientconnected:
                 #client.close()
                 clientconnected = false
@@ -270,7 +270,7 @@ proc updt_check*(respond_to_caller:bool = false, iclient:Irc, ievent:IrcEvent):b
         except OSError as e:
             if g_dbg: echo " +-> downloading file failed"
             if(respond_to_caller):
-                iclient.privmsg(ievent.origin, "failed to download main executable [" & repr(e) & "]")
+                discard iclient.privmsg(ievent.origin, "failed to download main executable [" & repr(e) & "]")
             if clientconnected:
                 #client.close()
                 clientconnected = false
@@ -344,4 +344,4 @@ proc updt_check*(respond_to_caller:bool = false, iclient:Irc, ievent:IrcEvent):b
     except OSError as e:
         if g_dbg: echo " +-> update failed"
         if(respond_to_caller):
-                iclient.privmsg(ievent.origin, "failed to on a very deep level [" & repr(e) & "]")
+                discard iclient.privmsg(ievent.origin, "failed to on a very deep level [" & repr(e) & "]")

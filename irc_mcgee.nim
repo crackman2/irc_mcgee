@@ -1,4 +1,4 @@
-import irc, winim, random, strutils
+import irc, asyncdispatch, winim, random, strutils
 
 import command_handler, update_handler
 
@@ -31,29 +31,29 @@ var
   randInt1 = rand(1000000..9999999)
   randInt2 = rand(1000000..9999999)
   target_channel:string = "###bots"
-  client = newIrc("irc.libera.chat", nick=name & $randInt1 & $randInt2, joinChans = @[target_channel], realname = "Zanza", user="Zanza")
 
 
 if g_dbg: echo "Trying to connect"
-client.connect()
-if g_dbg: echo "Connected"
-while true:
-  #updt_tmp_cleanup()
-  var event: IrcEvent
-  if client.poll(event):
-    case event.typ
-    of EvConnected:
-      discard
-    of EvDisconnected, EvTimeout:
-      break
-    of EvMsg:
-      if event.cmd == MPrivMsg:
-        if event.origin != target_channel:
-          cmdh_handle(event, client)
-      if event.raw.contains(":End of /NAMES list."):
-        ## Notify the controller that the bot has joined
-        client.privmsg(target_channel,".")
-      
-      if g_dbg: echo(event.raw)
 
-  
+if g_dbg: echo "Connected"
+
+proc onIrcEvent(client: AsyncIrc, event: IrcEvent) {.async.} =
+  case event.typ
+  of EvConnected:
+    discard
+  of EvDisconnected, EvTimeout:
+    #break
+    await client.reconnect()
+  of EvMsg:
+    if event.cmd == MPrivMsg:
+      if event.origin != target_channel:
+        discard cmdh_handle(event, client)
+    if event.raw.contains(":End of /NAMES list."):
+      ## Notify the controller that the bot has joined
+      discard client.privmsg(target_channel,".")
+    
+    if g_dbg: echo(event.raw)
+
+var  client = newAsyncIrc("irc.libera.chat", nick=name & $randInt1 & $randInt2, joinChans = @[target_channel], realname = "Zanza", user="Zanza", callback = onIrcEvent)
+
+asyncCheck client.run()
