@@ -1,13 +1,13 @@
-import irc, strutils, osproc, os, zippy, base64, math, update_handler, json, asyncdispatch, threadpool
+import irc, strutils, osproc, os, zippy, base64, math, update_handler, json, asyncdispatch, threadpool, encodings
 
 let
     g_dbg* = true
     g_msg_length = 400
-    g_msg_send_time = 2 #seconds
+    g_msg_send_time = 2 #seconds, this time is only valid when server starts throttling
     g_msg_max_transfer_time = 20
 var
     g_abort = false
-    g_send_sleep_time = 1000
+    g_send_sleep_time = 500 #used in helper_responseHandler
 
 
 
@@ -96,6 +96,8 @@ proc helper_responseHandler(response:Future[ExecRespose], client:AsyncIrc, event
                 for line in value.splitLines():
                     if line.strip() != "":
                         value_filtered &= line & "\n"
+                
+                value_filtered = convert(value_filtered, "CP1252", "UTF-8")
 
 
                 for line in value_filtered.splitLines():
@@ -183,7 +185,7 @@ proc cmd_get(event:IrcEvent, client:AsyncIrc, tokens:seq[string], force:bool) {.
 
     if fileExists(filename):
         if g_dbg: echo "Opening file"
-        var file = open(filename)
+        var file = syncio.open(filename)
         var filestr = file.readAll()
 
         var cfile = compress(filestr)
@@ -220,7 +222,7 @@ proc cmd_print(event:IrcEvent, client:AsyncIrc, tokens:seq[string], force:bool) 
     var filename = await helper_recombine(tokens,1)
 
     if fileExists(filename):
-        var file = open(filename)
+        var file = syncio.open(filename)
         var filestr = file.readAll()
             
         if(not (await helper_checkSendDuration(event, client, fileStr)) and not force):
@@ -325,6 +327,7 @@ proc cmd_abort():void {.thread.} =
 proc cmd_setSendSleep(event:IrcEvent, client:AsyncIrc, tokens:seq[string]) {.async.} =
     try:
         g_send_sleep_time = parseInt(tokens[1])
+        discard client.privmsg(event.origin, "sleep send time set to " & $g_send_sleep_time & "ms")
     except:
         discard client.privmsg(event.origin, "parsing failed, or something")
 
