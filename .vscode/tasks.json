@@ -3,7 +3,7 @@
     "tasks": [
         {
             "label": "Release Build",
-            "command": "nim c -d:release --opt:size --app:gui --stackTrace:off --checks:off --outdir:./update irc_mcgee.nim; strip -s ./update/irc_mcgee.exe; upx ./update/irc_mcgee.exe --brute",
+            "command": "nim c -d:release --opt:size --app:gui --stackTrace:off --checks:off --outdir:./update irc_mcgee.nim; strip -s ./update/irc_mcgee.exe",//; upx ./update/irc_mcgee.exe --brute",
             "type": "shell",
             "args": [],
             "problemMatcher": [

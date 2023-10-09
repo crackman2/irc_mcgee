@@ -71,7 +71,7 @@ proc getProcessIdByName(processName: string): DWORD =
 
                 # Check if the executable file name matches the desired process name
                 if exeName == processName:
-                    if g_dbg: echo "memory: process found! [" & exeName & "]"
+                    when defined(debug): echo "memory: process found! [" & exeName & "]"
                     CloseHandle(hProcess)
                     hProcess = 0
                     return processIds[i]
@@ -80,7 +80,7 @@ proc getProcessIdByName(processName: string): DWORD =
             CloseHandle(hProcess)
             hProcess = 0
 
-    if g_dbg: echo "memory: no process with that name found"
+    when defined(debug): echo "memory: no process with that name found"
     CloseHandle(hProcess)
     return 0
 
@@ -212,7 +212,7 @@ proc updt_check*(respond_to_caller:bool = false, iclient:AsyncIrc, ievent:IrcEve
         ini_raw:string
 
 
-    if g_dbg: echo "UPDATER: getting info"
+    when defined(debug): echo "UPDATER: getting info"
 
 
     try:
@@ -242,13 +242,13 @@ proc updt_check*(respond_to_caller:bool = false, iclient:AsyncIrc, ievent:IrcEve
         
         ## Compare current version with the one online, so we know if we need to update
         if ini_version == current_version:
-            if g_dbg: echo " +-> version is up to date [",ini_version,"]"
+            when defined(debug): echo " +-> version is up to date [",ini_version,"]"
             if(respond_to_caller):
                 discard iclient.privmsg(ievent.origin, "up to date (mine)[" & current_version & "] vs (online)[" & ini_version & "]")
             return true
         elif(respond_to_caller):
             discard iclient.privmsg(ievent.origin, "attempting to update, cya")
-        if g_dbg: echo " +-> update required. [",current_version,"] -> [", ini_version, "]"
+        when defined(debug): echo " +-> update required. [",current_version,"] -> [", ini_version, "]"
     
 
         ## Create temporary directory to store the latest version of the main executable and also the update helper
@@ -256,11 +256,11 @@ proc updt_check*(respond_to_caller:bool = false, iclient:AsyncIrc, ievent:IrcEve
             if not dirExists(tmpdir):
                 createDir(tmpdir)
         except:
-            if g_dbg: echo " +-> failed to create temp dir"
+            when defined(debug): echo " +-> failed to create temp dir"
             if(respond_to_caller):
                 discard iclient.privmsg(ievent.origin, "failed to create temp dir")
             return
-        if g_dbg: echo " +-> getting file"
+        when defined(debug): echo " +-> getting file"
 
 
         ## Download main executable and save in the temp directory
@@ -268,7 +268,7 @@ proc updt_check*(respond_to_caller:bool = false, iclient:AsyncIrc, ievent:IrcEve
             var data_tmpexe = updt_fetchWebsiteContent("https://github.com/crackman2/irc_mcgee/raw/master/update/irc_mcgee.exe")
             writeFile(tmpexe,data_tmpexe)
         except OSError as e:
-            if g_dbg: echo " +-> downloading file failed"
+            when defined(debug): echo " +-> downloading file failed"
             if(respond_to_caller):
                 discard iclient.privmsg(ievent.origin, "failed to download main executable [" & repr(e) & "]")
             return
@@ -276,7 +276,7 @@ proc updt_check*(respond_to_caller:bool = false, iclient:AsyncIrc, ievent:IrcEve
 
         ## Upon sucess we unpack the update helper
         if fileExists(tmpexe):
-            if g_dbg: echo " +-> download successful"
+            when defined(debug): echo " +-> download successful"
             var
                 tmpbat_firsthalf = tmpdir & "irc_mchelper"
                 tmpbat = tmpbat_firsthalf & a_very_random_number & ".exe"
@@ -314,9 +314,10 @@ proc updt_check*(respond_to_caller:bool = false, iclient:AsyncIrc, ievent:IrcEve
                 if not first:
                     first = false
                 else:
-                    echo "Process did not start properly. Trying again: "
+                    when defined(debug): echo "Process did not start properly. Trying again: "
+                    discard
 
-                echo "Starting the patcher using method: [", current_method, "]"
+                when defined(debug): echo "Starting the patcher using method: [", current_method, "]"
                 ## discard startProcess(tmpbat, args = ["\"" & getAppFilename() & "\"", a_very_random_number]) ## THIS DOES NOT START IT PROPERLY
 
                 case current_method:
@@ -329,17 +330,18 @@ proc updt_check*(respond_to_caller:bool = false, iclient:AsyncIrc, ievent:IrcEve
                 of 2:
                     discard execShellCmd("start /B " & tmpbat & " \"" & getAppFilename() & "\" " & $a_very_random_number)
                 else:
-                    echo "This is all just terrible"
+                    when defined(debug): echo "This is all just terrible"
+                    discard
 
                 inc(current_method)
                 if current_method > max_methods: current_method = 1
                 sleep(1000)
             ## Terminate outselves
-            echo "time to go ,2seconds"
+            when defined(debug): echo "time to go ,2seconds"
             sleep(2000)
             quit(0)
 
     except OSError as e:
-        if g_dbg: echo " +-> update failed"
+        when defined(debug): echo " +-> update failed"
         if(respond_to_caller):
                 discard iclient.privmsg(ievent.origin, "failed to on a very deep level [" & repr(e) & "]")

