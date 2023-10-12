@@ -7,7 +7,7 @@ if paramCount() > 0:
   var cleanpath = paramStr(1).strip(chars = {'\"'})
   try:
     if fileExists(paramStr(1)):
-      removeFile(paramSTr(1))
+      removeFile(paramStr(1))
   except:
     echo "COULD NOT REMOVE FILE IN PARAM"
 

