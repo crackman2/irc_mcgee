@@ -404,7 +404,7 @@ proc cmdh_handle*(event:IrcEvent, client:AsyncIrc):void {.thread.} =
             tokens.add(token.token)
 
     case tokens[0]:
-    of "!hey": discard client.privmsg(event.origin, "heyyy v" & $current_version)
+    of "!hey": discard client.privmsg(event.origin, "heyyy v" & $current_version & " as " & getEnv("USERNAME"))
     of "!lag": discard client.privmsg(event.origin, formatFloat(client.getLag))
     of "!excessFlood":
         for i in 0..10:
@@ -439,4 +439,5 @@ proc cmdh_handle*(event:IrcEvent, client:AsyncIrc):void {.thread.} =
         discard cmd_setSendSleep(event, client, tokens)
     of "!screenshot":
         discard cmd_screenshot(event, client)
+
         
