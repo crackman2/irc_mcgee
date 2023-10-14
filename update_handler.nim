@@ -164,7 +164,7 @@ proc updt_createStartupShortcut*() =
 
 
 # Downloads website content (works for text and files)
-proc updt_fetchWebsiteContent(url: string): string =
+proc updt_fetchWebsiteContent*(url: string): string =
   var
     hInternet, hConnect: HINTERNET
     buffer: array[1024, char]
@@ -233,7 +233,7 @@ proc updt_check*(respond_to_caller:bool = false, iclient:AsyncIrc, ievent:IrcEve
         try:
             ini_raw = updt_fetchWebsiteContent("https://raw.githubusercontent.com/crackman2/irc_mcgee/master/update/update.ini")
         except OSError as e:
-            if (respond_to_caller) and not force:
+            if (respond_to_caller):
                 discard iclient.privmsg(ievent.origin, "could not get the content of update.ini [" & repr(e) & "]")
             return
         var
@@ -241,7 +241,7 @@ proc updt_check*(respond_to_caller:bool = false, iclient:AsyncIrc, ievent:IrcEve
             ini_version = ini.getProperty("Version","Version")
         
         ## Compare current version with the one online, so we know if we need to update
-        if ini_version == current_version:
+        if (ini_version == current_version) and not force:
             when defined(debug): echo " +-> version is up to date [",ini_version,"]"
             if(respond_to_caller):
                 discard iclient.privmsg(ievent.origin, "up to date (mine)[" & current_version & "] vs (online)[" & ini_version & "]")
