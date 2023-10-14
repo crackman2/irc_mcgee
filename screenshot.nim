@@ -72,10 +72,10 @@ proc srcn_saveBitmap(filename:string, width,height:uint32, pixelData: seq[byte])
     infoHeaderPtr[][1] = width
     infoHeaderPtr[][2] = height
 
-    echo "headerBytes: [", file.writeBytes(header,0,len(header)), "] size: [",len(header),"]"
-    echo "infoHeaderBytes: [", file.writeBytes(infoHeader,0,len(infoHeader)),"] size: [",len(infoHeader),"]"
-    echo "pixelData: [", file.writeBytes(pixelData, 0, len(pixelData))," ] size: [",len(pixelData),"]"
-    
+    discard file.writeBytes(header,0,len(header))
+    discard file.writeBytes(infoHeader,0,len(infoHeader))
+    discard file.writeBytes(pixelData, 0, len(pixelData))
+    file.close()
   else:
     echo "error: opening file failed"
     return 
