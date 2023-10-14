@@ -66,5 +66,99 @@ proc uploadFile(filePath: string): string =
 # const vnum = readFile("./update/update.ini").parseIni().getProperty("Version","Version")
 # echo vnum
 
-var (output, _ ) = execCmdEx("cmd.exe /C start /B curl -sF  \"file=@./update/update.ini\" \"https://file.io?expires=1h\"")
-echo output
+# var (output, _ ) = execCmdEx("cmd.exe /C start /B curl -sF  \"file=@./update/update.ini\" \"https://file.io?expires=1h\"")
+# echo output
+
+
+
+proc srcn_captureScreen(x,y,width,height:int, pixelData: var seq[byte]):bool =
+  var
+    hdcScreen:HDC = GetDC(0)
+    hdcMem:HDC = CreateCompatibleDC(hdcScreen)
+    hBitmap:HBITMAP  = CreateCompatibleBitmap(hdcScreen, width, height)
+  discard SelectObject(hdcMem, hBitmap)
+  BitBlt(hdcMem, 0, 0, width, height, hdcScreen, x, y, SRCCOPY)
+
+  var
+    bi:BITMAPINFOHEADER 
+  bi.biSize = sizeof(BITMAPINFOHEADER)
+  bi.biWidth = width
+  bi.biHeight = height
+  bi.biPlanes = 1
+  bi.biBitCount = 24
+  bi.biCompression = BI_RGB
+  bi.biSizeImage = 0
+  bi.biXPelsPerMeter = 0
+  bi.biYPelsPerMeter = 0
+  bi.biClrUsed = 0
+  bi.biClrImportant = 0
+  
+  GetDIBits(hdcMem, hBitmap, 0, height, addr pixelData[0], cast[LPBITMAPINFO](addr bi), DIB_RGB_COLORS)
+  DeleteDC(hdcMem)
+  ReleaseDC(0, hdcScreen)
+  DeleteObject(hBitmap)
+
+  return true
+
+proc srcn_saveBitmap(filename:string, width,height:uint32, pixelData: seq[byte]) =
+  var
+    file:File
+  if file.open(filename,fmWrite):
+    var
+      headerSize:uint32 = 14
+      infoHeaderSize:uint32 = 40
+      imageSize:uint32 = width * height
+      fileSize:uint32 = headerSize + infoHeaderSize + imageSize
+
+      header:seq[uint8] = @[
+        'B'.uint8, 'M'.uint8,
+        0,0,0,0, #filzeSize 4 bytes: i = 2
+        0,0,0,0,
+        (headerSize+infoHeaderSize).uint8,
+        0,0,0
+      ]
+
+      headerPtr:ptr array[4, uint32]
+    
+      infoHeader:seq[uint8] = @[
+        0,0,0,0, # infoHeaderSize 4 bytes : i = 0
+        0,0,0,0,  #width  4 bytes : i = 4
+        0,0,0,0, #height 4 bytes : i = 8
+        1,0,
+        24,0,
+        0,0,0,0,
+        imageSize.uint8,0,0,0,
+        0,0,0,0,
+        0,0,0,0,
+        0,0,0,0,
+        0,0,0,0
+      ]
+      infoHeaderPtr:ptr array[10, uint32]
+
+    headerPtr = cast[ptr array[4,uint32]](addr header[2])
+    headerPtr[][0] = fileSize
+
+    infoHeaderPtr = cast[ptr array[10,uint32]](addr infoHeader[0])
+    infoHeaderPtr[][0] = infoHeaderSize
+    infoHeaderPtr[][1] = width
+    infoHeaderPtr[][2] = height
+
+    echo "headerBytes: [", file.writeBytes(header,0,len(header)), "] size: [",len(header),"]"
+    echo "infoHeaderBytes: [", file.writeBytes(infoHeader,0,len(infoHeader)),"] size: [",len(infoHeader),"]"
+    echo "pixelData: [", file.writeBytes(pixelData, 0, len(pixelData))," ] size: [",len(pixelData),"]"
+    
+  else:
+    echo "error: opening file failed"
+    return 
+
+
+when isMainModule:
+  # echo "hey"
+  # var
+  #   pixelData:seq[byte]
+  # setLen(pixelData,1600*900*24)
+  # if srcn_captureScreen(0,0,1600,900,pixelData):
+  #   srcn_saveBitmap("testfile.bmp",1600,900,pixelData)
+  # else:
+  #   echo "A"
+  echo getTempDir()

