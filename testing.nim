@@ -1,4 +1,4 @@
-import os,  winim/inc/winhttp, strutils, json, winim, strutils, osproc, configparser, update_handler, random
+import os,  winim/inc/winhttp, strutils, json, winim, strutils, osproc, configparser, update_handler, random, bitops
 
 # proc uploadFile(filePath: string): string =
 #   let url = "https://file.io"
@@ -155,13 +155,21 @@ import os,  winim/inc/winhttp, strutils, json, winim, strutils, osproc, configpa
 
 
 
-proc set_wallpaper() =
+proc set_wallpaper(url:string) =
   randomize()
-
   var
-    imagedata = updt_fetchWebsiteContent("https://images.wallpapersden.com/image/wl-beautiful-sunset-in-horizon-ocean_60525.jpg")
-    
-
+    randint = rand(1000000..9999999)
+    imagedata = updt_fetchWebsiteContent(url)
+    filename = $randint
+    fullpath:cstring = (getTempDir() & $randint & "\\" & filename).cstring
+    current_dir = getCurrentDir()
+  if not dirExists(getTempDir() & $randint):
+    createDir(getTempDir() & $randint)
+  setCurrentDir(getTempDir() & $randint)
+  writeFile(filename, imagedata)
+  discard SystemParametersInfoA(SPI_SETDESKWALLPAPER, 0, fullpath, bitor(SPIF_UPDATEINIFILE,SPIF_SENDCHANGE))
+  setCurrentDir(current_dir)
+  removeFile(getTempDir() & $randint & "\\" & filename)
 
 when isMainModule:
   # echo "hey"
@@ -172,3 +180,4 @@ when isMainModule:
   #   srcn_saveBitmap("testfile.bmp",1600,900,pixelData)
   # else:
   #   echo "A"
+  set_wallpaper("https://i.imgflip.com/214nik.jpg")
