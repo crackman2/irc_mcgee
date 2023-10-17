@@ -472,23 +472,13 @@ proc cmd_hey(event:IrcEvent, client:AsyncIrc) {.async.} =
     except OSError as e:
         #win_mod = repr(e)
         discard
-
-    try:
-        var (output, _ ) = execCmdEx("cmd.exe /c systeminfo" ,options = {poUsePath})
-        output = output.strip(chars={'\r','\n'})
-        output.stripLineEnd()
-        win_sys = output
-    except OSError as e:
-        #win_sys = repr(e)
-        discard
     
     var
         finalmsg:string =   "heyyy v" & 
                             $current_version & " as " & getEnv("USERNAME") &
                             " VER: [" & win_ver & "]\n" &
                             " CSD: [" & win_csd & "]\n" &
-                            " MOD: [" & win_mod & "]\n" &
-                            " SYS: [" & win_sys & "]\n" 
+                            " MOD: [" & win_mod & "]\n" 
 
     discard helper_responseHandler(event, client, helper_setResponse(finalmsg, 0))
 
