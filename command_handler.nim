@@ -111,10 +111,11 @@ proc helper_responseHandler(event:IrcEvent, client:AsyncIrc, response:Future[Exe
                 for line in value.splitLines():
                     if line.strip() != "":
                         value_filtered &= line & "\n"
-                try:
-                    value_filtered = convert(value_filtered, getCurrentEncoding(), "utf-8")
-                except:
-                    discard
+
+                # try:
+                #     value_filtered = convert(value_filtered, getCurrentEncoding(), "utf-8")
+                # except:
+                #     discard
 
                 for line in value_filtered.splitLines():
                     if g_abort: break
