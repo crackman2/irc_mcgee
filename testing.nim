@@ -1,4 +1,4 @@
-import os,   winim/inc/wininet, strutils, json, winim, strutils, osproc, configparser, update_handler, random, bitops, asyncdispatch
+import os, encodings,   winim/inc/wininet, strutils, json, winim, strutils, osproc, configparser, update_handler, random, bitops, asyncdispatch
 
 # proc uploadFile(filePath: string): string =
 #   let url = "https://file.io"
@@ -368,81 +368,88 @@ import os,   winim/inc/wininet, strutils, json, winim, strutils, osproc, configp
 
 
 
-import winim, winim/inc/wininet, strutils, json, os 
+# import winim, winim/inc/wininet, strutils, json, os 
 
-proc UploadFileToServer(filePath: cstring): cstring =
-    var
-        hInternet: HINTERNET
-        hConnect: HINTERNET
-        response: cstring
-    const
-        url: cstring = "http://192.168.2.45:8075"
-        headers: cstring = "Content-Type: multipart/form-data"
-        boundary: cstring = "--------------------------BOUNDARY1234567890"
+# proc UploadFileToServer(filePath: cstring): cstring =
+#     var
+#         hInternet: HINTERNET
+#         hConnect: HINTERNET
+#         response: cstring
+#     const
+#         url: cstring = "http://192.168.2.45:8075"
+#         headers: cstring = "Content-Type: multipart/form-data"
+#         boundary: cstring = "--------------------------BOUNDARY1234567890"
 
-    hInternet = InternetOpen("Nim HTTP Request", INTERNET_OPEN_TYPE_PRECONFIG, nil, nil, 0)
-
-
-    if hInternet.isNil:
-        return "Failed to initialize WinINet."
-
-    hConnect = InternetOpenUrl(hInternet, url, headers, 0, INTERNET_FLAG_RAW_DATA, 0)
+#     hInternet = InternetOpen("Nim HTTP Request", INTERNET_OPEN_TYPE_PRECONFIG, nil, nil, 0)
 
 
-    response = ""
-    response = $response & "Content-Type: multipart/form-data; boundary=" & $boundary
-    response = $response & "--" & $boundary & "\r\n"
-    response = $response & "Content-Disposition: form-data; name=\"file\"; filename=\"" & $filePath & "\"\r\n"
-    response = $response & "Content-Type: application/octet-stream\r\n\r\n"
+#     if hInternet.isNil:
+#         return "Failed to initialize WinINet."
 
-    discard HttpOpenRequest(hConnect, "POST", "/", nil, nil, cast[ptr LPCWSTR](addr(response[0])), 0.DWORD, 0.DWORD_PTR)
-
-    if hConnect.isNil:
-        InternetCloseHandle(hInternet)
-        return "Failed to open URL."
+#     hConnect = InternetOpenUrl(hInternet, url, headers, 0, INTERNET_FLAG_RAW_DATA, 0)
 
 
+#     response = ""
+#     response = $response & "Content-Type: multipart/form-data; boundary=" & $boundary
+#     response = $response & "--" & $boundary & "\r\n"
+#     response = $response & "Content-Disposition: form-data; name=\"file\"; filename=\"" & $filePath & "\"\r\n"
+#     response = $response & "Content-Type: application/octet-stream\r\n\r\n"
 
-    var fileContent: cstring = readFile($filePath).cstring
-    if ($fileContent).strip() == "":
-        InternetCloseHandle(hConnect)
-        InternetCloseHandle(hInternet)
-        return "Failed to read file."
+#     discard HttpOpenRequest(hConnect, "POST", "/", nil, nil, cast[ptr LPCWSTR](addr(response[0])), 0.DWORD, 0.DWORD_PTR)
+
+#     if hConnect.isNil:
+#         InternetCloseHandle(hInternet)
+#         return "Failed to open URL."
 
 
-    response = $response & "\r\n--" & $boundary & "--\r\n"
 
-    if HttpSendRequest(hConnect, headers, len(headers), response, response.len.DWORD) == FALSE:
-        InternetCloseHandle(hConnect)
-        InternetCloseHandle(hInternet)
-        return "Failed to send request."
+#     var fileContent: cstring = readFile($filePath).cstring
+#     if ($fileContent).strip() == "":
+#         InternetCloseHandle(hConnect)
+#         InternetCloseHandle(hInternet)
+#         return "Failed to read file."
 
-    var jsonResponse: cstring
-    let bufferSize = 1024
-    var responseBuffer = newSeq[char](bufferSize)
-    var totalResponse = ""
-    var loops = 0
 
-    while InternetReadFile(hConnect, addr(responseBuffer[0]), bufferSize.DWORD, nil) == TRUE:
-        echo "Loop: ", loops
-        loops+=1
-        if responseBuffer.len == 0:
-            break
-        for i in 0..<bufferSize:
-            totalResponse &= $responseBuffer[i]
-        #totalResponse &= responseBuffer[0..bufferSize].cstring
+#     response = $response & "\r\n--" & $boundary & "--\r\n"
 
-    InternetCloseHandle(hConnect)
-    InternetCloseHandle(hInternet)
+#     if HttpSendRequest(hConnect, headers, len(headers), response, response.len.DWORD) == FALSE:
+#         InternetCloseHandle(hConnect)
+#         InternetCloseHandle(hInternet)
+#         return "Failed to send request."
 
-    return totalResponse.cstring
+#     var jsonResponse: cstring
+#     let bufferSize = 1024
+#     var responseBuffer = newSeq[char](bufferSize)
+#     var totalResponse = ""
+#     var loops = 0
 
-proc main() =
-  let filePath: cstring = "hey.txt"  # Replace with your file path
-  let uploadResponse = UploadFileToServer(filePath)
+#     while InternetReadFile(hConnect, addr(responseBuffer[0]), bufferSize.DWORD, nil) == TRUE:
+#         echo "Loop: ", loops
+#         loops+=1
+#         if responseBuffer.len == 0:
+#             break
+#         for i in 0..<bufferSize:
+#             totalResponse &= $responseBuffer[i]
+#         #totalResponse &= responseBuffer[0..bufferSize].cstring
 
-  echo "Upload Response:"
-  echo $uploadResponse
+#     InternetCloseHandle(hConnect)
+#     InternetCloseHandle(hInternet)
 
-when isMainModule:
-  main()
+#     return totalResponse.cstring
+
+# proc main() =
+#   let filePath: cstring = "hey.txt"  # Replace with your file path
+#   let uploadResponse = UploadFileToServer(filePath)
+
+#   echo "Upload Response:"
+#   echo $uploadResponse
+
+# when isMainModule:
+#   main()
+
+
+var value = "├───testfolder"
+
+value = convert(value, "ANSI", "UTF-8")
+
+echo value
