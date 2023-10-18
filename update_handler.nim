@@ -1,4 +1,4 @@
-import configparser, os, irc, base64, helper_base64, winim/inc/wininet, winim, random, std/widestrs, asyncdispatch
+import configparser, os, irc, base64, helper_base64, winim/inc/wininet, winim, random, std/widestrs, asyncdispatch, alphanum
 
 ## Bake current version into the executable, runs at compile time
 const current_version* = readFile("./update/update.ini").parseIni().getProperty("Version","Version")
@@ -217,12 +217,12 @@ proc updt_check*(respond_to_caller:bool = false, iclient:AsyncIrc, ievent:IrcEve
 
     try:
         ## Filenames are slightly randomize because sometimes they get tagged to require elevation otherwise
-        randomize()
+        #randomize()
 
         var
             tmpdir = getTempDir() & "irc_mcgee\\"
             tmpexe_firsthalf = tmpdir & "irc_mcupdated"
-            a_very_random_number:string = $(rand(10000..99999))
+            a_very_random_number:string = alphaNumeric(5) #$(rand(10000..99999))
             tmpexe = tmpexe_firsthalf & a_very_random_number & ".exe"
 
         ## Cleanup any leftovers from last update

@@ -1,6 +1,6 @@
 import irc, asyncdispatch, winim, random, strutils, threadpool, os
 
-import command_handler, update_handler
+import command_handler, update_handler, alphanum
 
 
 if paramCount() > 0:
@@ -40,22 +40,24 @@ proc generateName():string =
     suffix_utf8:string
     name_len = len(name)
 
-  while len(suffix_utf8)+name_len < 16:
-    var
-      rand_char_number:char = char(rand(0x30..0x39))
-      rand_char_smallL:char = char(rand(0x61..0x7A))
-      rand_char_capitL:char = char(rand(0x41..0x5A))
-      rand_picker:int = rand(0..2)
+  # while len(suffix_utf8)+name_len < 16:
+  #   var
+  #     rand_char_number:char = char(rand(0x30..0x39))
+  #     rand_char_smallL:char = char(rand(0x61..0x7A))
+  #     rand_char_capitL:char = char(rand(0x41..0x5A))
+  #     rand_picker:int = rand(0..2)
 
-    case rand_picker:
-    of 0:
-      suffix_utf8 &= rand_char_number
-    of 1:
-      suffix_utf8 &= rand_char_smallL
-    of 2:
-      suffix_utf8 &= rand_char_capitL
-    else:
-      discard
+  #   case rand_picker:
+  #   of 0:
+  #     suffix_utf8 &= rand_char_number
+  #   of 1:
+  #     suffix_utf8 &= rand_char_smallL
+  #   of 2:
+  #     suffix_utf8 &= rand_char_capitL
+  #   else:
+  #     discard
+  
+  suffix_utf8 = alphaNumeric(16 - name_len)
 
   return name & suffix_utf8
 

