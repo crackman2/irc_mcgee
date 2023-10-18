@@ -448,7 +448,7 @@ import os, encodings,   winim/inc/wininet, strutils, json, winim, strutils, ospr
 #   main()
 
 
-var value = "├───testfolder"
+var (value, _) = execCmdEx("cmd.exe /C tree")
 
 value = convert(value, getCurrentEncoding(), "ibm850")
 
