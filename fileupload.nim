@@ -4,7 +4,7 @@ proc fileUpload*(filename:string):Future[string] {.async.}=
     var
         str_header = "Content-Type: multipart/form-data; boundary=----$$ABCXYZ$$"
         str_open =  "------$$ABCXYZ$$\r\n"&
-                    "Content-Disposition: form-data; name=\"file\"; filename=\"filename.txt\"\r\n"&
+                    "Content-Disposition: form-data; name=\"file\"; filename=\"" & filename & "\"\r\n"&
                     "Content-Type: application/octet-stream\r\n"&
                     "\r\n"
         str_close = "\r\n------$$ABCXYZ$$--\r\n"
