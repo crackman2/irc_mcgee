@@ -306,7 +306,7 @@ proc cmd_rexec(event:IrcEvent, client:AsyncIrc, tokens:seq[string]) {.async.} =
         else:
             var path = await helper_recombine(tokens,2)
             if await rexec_changeDir(path):
-                discard client.privmsg(event.origin, "cwd: " & path)
+                discard client.privmsg(event.origin, "cwd: " & getCurrentDir())
             else:
                 discard client.privmsg(event.origin, "cwd: no such directory")
 
