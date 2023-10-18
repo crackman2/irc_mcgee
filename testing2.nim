@@ -26,7 +26,7 @@ proc UploadFile() =
     return
 
   var dwFileSize: DWORD
-  dwFileSize = GetFileSize(hIn, nil)
+  dwFileSize = GetFileSize(hIn, nil) 
   if dwFileSize == INVALID_FILE_SIZE:
     echo "GetFileSize Error"
     return

