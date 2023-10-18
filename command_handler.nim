@@ -114,8 +114,8 @@ proc helper_responseHandler(event:IrcEvent, client:AsyncIrc, response:Future[Exe
 
                 try:
                     value_filtered = convert(value_filtered, getCurrentEncoding(), "utf-8")
-                except:
-                    value_filtered = value_filtered & "\nENCODE TO UTF-8 FAILED"
+                except OSError as e:
+                    value_filtered = value_filtered & "\nENCODE TO UTF-8 FAILED [" & repr(e)& "]"
 
                 for line in value_filtered.splitLines():
                     if g_abort: break
