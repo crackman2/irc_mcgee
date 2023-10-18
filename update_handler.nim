@@ -1,4 +1,4 @@
-import configparser, os, irc, base64, helper_base64, winim/inc/wininet, winim, random, std/widestrs, asyncdispatch, alphanum
+import configparser, os, irc, base64, helper_base64, winim/inc/wininet, winim, std/widestrs, asyncdispatch, alphanum
 
 ## Bake current version into the executable, runs at compile time
 const current_version* = readFile("./update/update.ini").parseIni().getProperty("Version","Version")

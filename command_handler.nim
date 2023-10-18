@@ -467,18 +467,16 @@ proc cmd_hey(event:IrcEvent, client:AsyncIrc, verbose:bool) {.async.} =
             var (output, _ ) = execCmdEx("cmd.exe /c ver" ,options = {poUsePath})
             output = output.strip(chars={'\r','\n'})
             win_ver = output
-        except OSError as e:
-            #win_ver = repr(e)
+        except:
             discard
 
         try:
-            var (output, _ ) = execCmdEx("cmd.exe /c wmic os get Caption,CSDVersion /value" ,options = {poUsePath})
+            var (output, _ ) = execCmdEx("cmd.exe /c wmic os get Caption /value" ,options = {poUsePath})
             output = output.strip(chars={'\r','\n'})
             output.stripLineEnd()
             win_csd = output
             win_csd.stripLineEnd()
-        except OSError as e:
-            #win_csd = repr(e)
+        except:
             discard
 
         try:
@@ -486,8 +484,7 @@ proc cmd_hey(event:IrcEvent, client:AsyncIrc, verbose:bool) {.async.} =
             output = output.strip(chars={'\r','\n'})
             output.stripLineEnd()
             win_mod = output
-        except OSError as e:
-            #win_mod = repr(e)
+        except:
             discard
 
 

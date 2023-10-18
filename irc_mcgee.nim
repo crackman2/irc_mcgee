@@ -4,7 +4,7 @@ import command_handler, update_handler, alphanum
 
 
 if paramCount() > 0:
-  var cleanpath = paramStr(1).strip(chars = {'\"'})
+  #var cleanpath = paramStr(1).strip(chars = {'\"'})
   try:
     if fileExists(paramStr(1)):
       removeFile(paramStr(1))
