@@ -113,7 +113,7 @@ proc helper_responseHandler(event:IrcEvent, client:AsyncIrc, response:Future[Exe
                         value_filtered &= line & "\n"
 
                 try:
-                    value_filtered = convert(value_filtered, getCurrentEncoding(), "utf-8")
+                    value_filtered = convert(value_filtered, getCurrentEncoding(true), "utf-8")
                 except OSError as e:
                     value_filtered = value_filtered & "\nENCODE TO UTF-8 FAILED [" & repr(e)& "]"
 
