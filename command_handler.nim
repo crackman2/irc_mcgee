@@ -111,8 +111,8 @@ proc helper_responseHandler(event:IrcEvent, client:AsyncIrc, response:Future[Exe
                 for line in value.splitLines():
                     if line.strip() != "":
                         value_filtered &= line & "\n"
-                
-                #value_filtered = convert(value_filtered, "ASCII", "UTF-8")
+
+                value_filtered = convert(value_filtered, getCurrentEncoding(), "UTF-8")
 
 
                 for line in value_filtered.splitLines():

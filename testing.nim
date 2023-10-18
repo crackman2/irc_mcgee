@@ -450,6 +450,10 @@ import os, encodings,   winim/inc/wininet, strutils, json, winim, strutils, ospr
 
 var value = "├───testfolder"
 
-value = convert(value, "ANSI", "UTF-8")
+value = convert(value, "ibm850", "UTF-8")
+
+var enc = GetConsoleOutputCP()
+
+echo "cp: ", enc
 
 echo value
