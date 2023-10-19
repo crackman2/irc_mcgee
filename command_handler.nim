@@ -240,7 +240,7 @@ proc rexec_tree(event:IrcEvent, client:AsyncIrc, path: string, indent: string = 
             let isLastEntry = idx == entries.high
             idx+=1
 
-            fulltree[] = indent & (if isLastEntry: "└── " else: "├── ") & splitPath(entry.dirName).tail & "\n"
+            fulltree[] &= indent & (if isLastEntry: "└── " else: "├── ") & splitPath(entry.dirName).tail & "\n"
 
             if isDirectory:
                 await rexec_tree(event, client, entry.dirName, indent & (if isLastEntry: "    " else: "│   "), isLastEntry, fulltree)
