@@ -1,4 +1,4 @@
-import os, encodings,   winim/inc/wininet, strutils, json, winim, strutils, osproc, configparser, update_handler, random, bitops, asyncdispatch
+import os, encodings,   winim/inc/wininet, json, winim, strutils, osproc, configparser, random, bitops, asyncdispatch
 
 # proc uploadFile(filePath: string): string =
 #   let url = "https://file.io"
@@ -448,12 +448,71 @@ import os, encodings,   winim/inc/wininet, strutils, json, winim, strutils, ospr
 #   main()
 
 
-var (value, _) = execCmdEx("cmd.exe /C tree")
+var
+  folders:seq[string]
+  files:seq[string]
+  cwd = getCurrentDir()
+  spacer_len = 0
 
-value = convert(value, getCurrentEncoding(), "ibm850")
+for kind, path in walkDir(cwd):
+  case kind:
+  of pcDir:
+    folders.add(path)
+  of pcFile:
+    files.add(path)
+  else:
+    continue
 
-var enc = getCurrentEncoding()
+proc spacer(amt:int):string =
+  var cnt = amt
+  result = ""
+  while cnt > 0:
+    cnt -= 1
+    result &= " "
+  return result
 
-echo "cp: ", enc
+var
+  row_cnt = 0
+  row_max = 4
 
-echo value
+  folder_str = ""
+  file_str = ""
+
+for folder in folders:
+  if len("[" & splitPath(folder).tail & "]") > spacer_len:
+    spacer_len = len("[" & splitPath(folder).tail & "]")
+
+for file in files:
+  if len(splitPath(file).tail) > spacer_len:
+    spacer_len = len(splitPath(file).tail)
+
+if spacer_len < 30:
+  row_max = 4
+elif spacer_len > 30 and spacer_len < 40:
+  row_max = 3
+elif spacer_len > 40 and spacer_len < 50:
+  row_max = 2
+elif spacer_len > 50:
+  row_max = 1
+
+for folder in folders:
+  var foldername = "[" & splitPath(folder).tail & "]"
+  folder_str &=  foldername  & spacer(spacer_len-(len(foldername)))
+  row_cnt += 1
+  if row_cnt >= row_max:
+    folder_str &= "\n"
+    row_cnt = 0
+
+echo "SPACELEN: ", spacer_len
+
+row_cnt = 0
+
+for file in files:
+  var filename = splitPath(file).tail
+  file_str &= filename & spacer(spacer_len-len(filename))
+  row_cnt += 1
+  if row_cnt >= row_max:
+    file_str &= "\n"
+    row_cnt = 0
+  
+echo "\nPath: [" & cwd & "]\n" & folder_str & "\n" & file_str

