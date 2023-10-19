@@ -238,7 +238,7 @@ proc rexec_directoryListing(event:IrcEvent, client:AsyncIrc) {.async.} =
 
 
 
-proc rexec_tree(event:IrcEvent, client:AsyncIrc, path: string, indent: string = "", isLast: bool = true, fulltree: ptr string) {.async, gcsafe.} =
+proc rexec_tree(event:IrcEvent, client:AsyncIrc, path: string, indent: string = "", isLast: bool = true, fulltree: ptr string, showfile:bool) {.async, gcsafe.} =
     try:
         var
             entries: seq[tuple[kind:PathComponent, dirName:string]]
@@ -255,10 +255,11 @@ proc rexec_tree(event:IrcEvent, client:AsyncIrc, path: string, indent: string = 
             let isLastEntry = idx == entries.high
             idx+=1
 
-            fulltree[] &= indent & (if isLastEntry: "\\-- " else: "+-- ") & splitPath(entry.dirName).tail & "\n"
+            if isDirectory or showfile:
+                fulltree[] &= indent & (if isLastEntry: "\\-- " else: "+-- ") & splitPath(entry.dirName).tail & "\n"
 
             if isDirectory:
-                await rexec_tree(event, client, entry.dirName, indent & (if isLastEntry: "    " else: "|   "), isLastEntry, fulltree)
+                await rexec_tree(event, client, entry.dirName, indent & (if isLastEntry: "    " else: "|   "), isLastEntry, fulltree, showfile)
 
         if (fulltree_len == 0) and (not g_abort):
             discard helper_responseHandler(event, client, helper_setResponse(fulltree[],0))
@@ -442,7 +443,11 @@ proc cmd_rexec(event:IrcEvent, client:AsyncIrc, tokens:seq[string]) {.async.} =
     of "tree":
         var fulltree:string
         var fulltree_ptr:ptr string = addr fulltree
-        discard rexec_tree(event, client, getCurrentDir(), "", true, fulltree_ptr)
+        var showfiles:bool = false
+        if len(tokens) > 2:
+            if tokens[2].toLower() == "/f":
+                showfiles = true
+        discard rexec_tree(event, client, getCurrentDir(), "", true, fulltree_ptr, showfiles)
     else:
         var args:string
         args = await helper_recombine(tokens)
