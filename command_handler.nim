@@ -197,6 +197,8 @@ proc rexec_directoryListing(event:IrcEvent, client:AsyncIrc, tokens:seq[string])
     elif spacer_len > 50:
         row_max = 1
 
+    spacer_len += 1
+
     for folder in folders:
         var foldername = "[" & splitPath(folder).tail & "]"
         folder_str &=  foldername  & spacer(spacer_len-(len(foldername)))
@@ -219,6 +221,32 @@ proc rexec_directoryListing(event:IrcEvent, client:AsyncIrc, tokens:seq[string])
     discard helper_responseHandler(event, client, helper_setResponse(output,0))
 
 
+
+
+proc rexec_tree(event:IrcEvent, client:AsyncIrc, path: string, indent: string = "", isLast: bool = true, fulltree: ptr string) {.async, gcsafe.} =
+    var
+        entries: seq[tuple[kind:PathComponent, dirName:string]]
+        idx = 0
+        fulltree_len = len(fulltree[])
+
+    for (kind, dirName) in walkDir(path):
+        entries.add((kind, dirName))
+
+    for entry in entries:
+        if g_abort: 
+            break
+        let isDirectory = if entry.kind == pcDir: true else: false
+        let isLastEntry = idx == entries.high
+        idx+=1
+
+        fulltree[] = indent & (if isLastEntry: "└── " else: "├── ") & splitPath(entry.dirName).tail & "\n"
+
+        if isDirectory:
+            await rexec_tree(event, client, entry.dirName, indent & (if isLastEntry: "    " else: "│   "), isLastEntry, fulltree)
+
+    if (fulltree_len == 0) and (not g_abort):
+        discard helper_responseHandler(event, client, helper_setResponse(fulltree[],0))
+  
 
 
 
@@ -393,6 +421,9 @@ proc cmd_rexec(event:IrcEvent, client:AsyncIrc, tokens:seq[string]) {.async.} =
         #caught = true
     of "dir":
         discard rexec_directoryListing(event, client, tokens)
+    of "tree":
+        var fulltree:ptr string
+        discard rexec_tree(event, client, getCurrentDir(), "", true, fulltree)
     else:
         var args:string
         args = await helper_recombine(tokens)

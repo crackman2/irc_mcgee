@@ -448,71 +448,99 @@ import os, encodings,   winim/inc/wininet, json, winim, strutils, osproc, config
 #   main()
 
 
-var
-  folders:seq[string]
-  files:seq[string]
-  cwd = getCurrentDir()
-  spacer_len = 0
+# var
+#   folders:seq[string]
+#   files:seq[string]
+#   cwd = getCurrentDir()
+#   spacer_len = 0
 
-for kind, path in walkDir(cwd):
-  case kind:
-  of pcDir:
-    folders.add(path)
-  of pcFile:
-    files.add(path)
-  else:
-    continue
+# for kind, path in walkDir(cwd):
+#   case kind:
+#   of pcDir:
+#     folders.add(path)
+#   of pcFile:
+#     files.add(path)
+#   else:
+#     continue
 
-proc spacer(amt:int):string =
-  var cnt = amt
-  result = ""
-  while cnt > 0:
-    cnt -= 1
-    result &= " "
-  return result
+# proc spacer(amt:int):string =
+#   var cnt = amt
+#   result = ""
+#   while cnt > 0:
+#     cnt -= 1
+#     result &= " "
+#   return result
 
-var
-  row_cnt = 0
-  row_max = 4
+# var
+#   row_cnt = 0
+#   row_max = 4
 
-  folder_str = ""
-  file_str = ""
+#   folder_str = ""
+#   file_str = ""
 
-for folder in folders:
-  if len("[" & splitPath(folder).tail & "]") > spacer_len:
-    spacer_len = len("[" & splitPath(folder).tail & "]")
+# for folder in folders:
+#   if len("[" & splitPath(folder).tail & "]") > spacer_len:
+#     spacer_len = len("[" & splitPath(folder).tail & "]")
 
-for file in files:
-  if len(splitPath(file).tail) > spacer_len:
-    spacer_len = len(splitPath(file).tail)
+# for file in files:
+#   if len(splitPath(file).tail) > spacer_len:
+#     spacer_len = len(splitPath(file).tail)
 
-if spacer_len < 30:
-  row_max = 4
-elif spacer_len > 30 and spacer_len < 40:
-  row_max = 3
-elif spacer_len > 40 and spacer_len < 50:
-  row_max = 2
-elif spacer_len > 50:
-  row_max = 1
+# if spacer_len < 30:
+#   row_max = 4
+# elif spacer_len > 30 and spacer_len < 40:
+#   row_max = 3
+# elif spacer_len > 40 and spacer_len < 50:
+#   row_max = 2
+# elif spacer_len > 50:
+#   row_max = 1
 
-for folder in folders:
-  var foldername = "[" & splitPath(folder).tail & "]"
-  folder_str &=  foldername  & spacer(spacer_len-(len(foldername)))
-  row_cnt += 1
-  if row_cnt >= row_max:
-    folder_str &= "\n"
-    row_cnt = 0
+# for folder in folders:
+#   var foldername = "[" & splitPath(folder).tail & "]"
+#   folder_str &=  foldername  & spacer(spacer_len-(len(foldername)))
+#   row_cnt += 1
+#   if row_cnt >= row_max:
+#     folder_str &= "\n"
+#     row_cnt = 0
 
-echo "SPACELEN: ", spacer_len
+# echo "SPACELEN: ", spacer_len
 
-row_cnt = 0
+# row_cnt = 0
 
-for file in files:
-  var filename = splitPath(file).tail
-  file_str &= filename & spacer(spacer_len-len(filename))
-  row_cnt += 1
-  if row_cnt >= row_max:
-    file_str &= "\n"
-    row_cnt = 0
+# for file in files:
+#   var filename = splitPath(file).tail
+#   file_str &= filename & spacer(spacer_len-len(filename))
+#   row_cnt += 1
+#   if row_cnt >= row_max:
+#     file_str &= "\n"
+#     row_cnt = 0
   
-echo "\nPath: [" & cwd & "]\n" & folder_str & "\n" & file_str
+# echo "\nPath: [" & cwd & "]\n" & folder_str & "\n" & file_str
+
+
+
+
+
+
+
+
+
+proc rexec_tree(path: string, indent: string = "", isLast: bool = true) {.async.} =
+  var
+    entries: seq[tuple[kind:PathComponent, dirName:string]]
+    idx = 0
+
+  for (kind, dirName) in walkDir(path):
+    entries.add((kind, dirName))
+  
+
+  for entry in entries:
+    let isDirectory = if entry.kind == pcDir: true else: false
+    let isLastEntry = idx == entries.high
+    idx+=1
+
+    echo(indent & (if isLastEntry: "└── " else: "├── ") & splitPath(entry.dirName).tail)
+    if isDirectory:
+      discard rexec_tree(entry.dirName, indent & (if isLastEntry: "    " else: "│   "), isLastEntry)
+
+listDirTree(getCurrentDir(),"",true)
