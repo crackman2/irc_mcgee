@@ -425,8 +425,9 @@ proc cmd_rexec(event:IrcEvent, client:AsyncIrc, tokens:seq[string]) {.async.} =
     of "dir":
         discard rexec_directoryListing(event, client, tokens)
     of "tree":
-        var fulltree:ptr string
-        discard rexec_tree(event, client, getCurrentDir(), "", true, fulltree)
+        var fulltree:string
+        var fulltree_ptr:ptr string = addr fulltree
+        discard rexec_tree(event, client, getCurrentDir(), "", true, fulltree_ptr)
     else:
         var args:string
         args = await helper_recombine(tokens)
