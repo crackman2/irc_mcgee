@@ -184,6 +184,29 @@ proc rexec_directoryListing(event:IrcEvent, client:AsyncIrc) {.async.} =
         if len("[" & splitPath(folder).tail & "]") > spacer_len:
             spacer_len = len("[" & splitPath(folder).tail & "]")
 
+
+    if spacer_len < 30:
+        row_max = 4
+    elif spacer_len > 30 and spacer_len < 40:
+        row_max = 3
+    elif spacer_len > 40 and spacer_len < 50:
+        row_max = 2
+    elif spacer_len > 50:
+        row_max = 1
+
+    spacer_len += 1
+
+
+    for folder in folders:
+        var foldername = "[" & splitPath(folder).tail & "]"
+        folder_str &=  foldername  & spacer(spacer_len-(len(foldername)))
+        row_cnt += 1
+        if row_cnt >= row_max:
+            folder_str &= "\n"
+            row_cnt = 0
+
+
+
     for file in files:
         if len(splitPath(file).tail) > spacer_len:
             spacer_len = len(splitPath(file).tail)
@@ -198,14 +221,6 @@ proc rexec_directoryListing(event:IrcEvent, client:AsyncIrc) {.async.} =
         row_max = 1
 
     spacer_len += 1
-
-    for folder in folders:
-        var foldername = "[" & splitPath(folder).tail & "]"
-        folder_str &=  foldername  & spacer(spacer_len-(len(foldername)))
-        row_cnt += 1
-        if row_cnt >= row_max:
-            folder_str &= "\n"
-            row_cnt = 0
 
     row_cnt = 0
 
