@@ -160,10 +160,8 @@ proc rexec_directoryListing(event:IrcEvent, client:AsyncIrc) {.async.} =
         case kind:
         of pcDir:
             folders.add(path)
-        of pcFile:
-            files.add(path)
         else:
-            continue
+            files.add(path)
 
     proc spacer(amt:int):string =
         var cnt = amt
