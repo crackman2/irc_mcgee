@@ -374,7 +374,7 @@ proc cmd_print(event:IrcEvent, client:AsyncIrc, tokens:seq[string], force:bool) 
             else:
                 discard client.privmsg(event.origin, line)
             if g_abort: break
-            sleep(g_msg_send_time)
+            sleep(g_send_sleep_time)
 
         close(file)
 
