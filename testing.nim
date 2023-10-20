@@ -525,63 +525,71 @@ import os, encodings,   winim/inc/wininet, json, winim, strutils, osproc, config
 
 
 
-proc rexec_tree(path: string, indent: string = "", isLast: bool = true) {.async.} =
-  var
-    entries: seq[tuple[kind:PathComponent, dirName:string]]
-    idx = 0
+# proc rexec_tree(path: string, indent: string = "", isLast: bool = true) {.async.} =
+#   var
+#     entries: seq[tuple[kind:PathComponent, dirName:string]]
+#     idx = 0
 
-  for (kind, dirName) in walkDir(path):
-    entries.add((kind, dirName))
+#   for (kind, dirName) in walkDir(path):
+#     entries.add((kind, dirName))
   
 
-  for entry in entries:
-    let isDirectory = if entry.kind == pcDir: true else: false
-    let isLastEntry = idx == entries.high
-    idx+=1
+#   for entry in entries:
+#     let isDirectory = if entry.kind == pcDir: true else: false
+#     let isLastEntry = idx == entries.high
+#     idx+=1
 
-    echo(indent & (if isLastEntry: "└── " else: "├── ") & splitPath(entry.dirName).tail)
-    if isDirectory:
-      discard rexec_tree(entry.dirName, indent & (if isLastEntry: "    " else: "│   "), isLastEntry)
-
-
-
-proc rexec_tree(path: string, indent: string = "", isLast: bool = true, fulltree: ptr string) {.async, gcsafe.} =
-    try:
-        var
-            entries: seq[tuple[kind:PathComponent, dirName:string]]
-            idx = 0
-            fulltree_len = len(fulltree[])
-
-        for (kind, dirName) in walkDir(path):
-            entries.add((kind, dirName))
-
-        for entry in entries:
-            let isDirectory = if entry.kind == pcDir: true else: false
-            let isLastEntry = idx == entries.high
-            idx+=1
-
-            var append = indent & (if isLastEntry: "└── " else: "├── ") & splitPath(entry.dirName).tail & "\n"
-            #setLen(fulltree[], len(fulltree[]) + len(append))
-
-            fulltree[] &= append
-
-            if isDirectory:
-                await rexec_tree(entry.dirName, indent & (if isLastEntry: "    " else: "│   "), isLastEntry, fulltree)
-
-        # if (fulltree_len == 0):
-        #     echo "TREE:\n", fulltree[]
-    except OSError as e:
-        echo "ERROR:", repr(e)
+#     echo(indent & (if isLastEntry: "└── " else: "├── ") & splitPath(entry.dirName).tail)
+#     if isDirectory:
+#       discard rexec_tree(entry.dirName, indent & (if isLastEntry: "    " else: "│   "), isLastEntry)
 
 
+
+# proc rexec_tree(path: string, indent: string = "", isLast: bool = true, fulltree: ptr string) {.async, gcsafe.} =
+#     try:
+#         var
+#             entries: seq[tuple[kind:PathComponent, dirName:string]]
+#             idx = 0
+#             fulltree_len = len(fulltree[])
+
+#         for (kind, dirName) in walkDir(path):
+#             entries.add((kind, dirName))
+
+#         for entry in entries:
+#             let isDirectory = if entry.kind == pcDir: true else: false
+#             let isLastEntry = idx == entries.high
+#             idx+=1
+
+#             var append = indent & (if isLastEntry: "└── " else: "├── ") & splitPath(entry.dirName).tail & "\n"
+#             #setLen(fulltree[], len(fulltree[]) + len(append))
+
+#             fulltree[] &= append
+
+#             if isDirectory:
+#                 await rexec_tree(entry.dirName, indent & (if isLastEntry: "    " else: "│   "), isLastEntry, fulltree)
+
+#         # if (fulltree_len == 0):
+#         #     echo "TREE:\n", fulltree[]
+#     except OSError as e:
+#         echo "ERROR:", repr(e)
 
 
 
 
-var
-  fulltree:string
-  fulltree_ptr:ptr string = addr fulltree
 
-waitFor rexec_tree(getCurrentDir(), "", true, fulltree_ptr)
 
-writeFile("treespam.txt", fulltree)
+# var
+#   fulltree:string
+#   fulltree_ptr:ptr string = addr fulltree
+
+# waitFor rexec_tree(getCurrentDir(), "", true, fulltree_ptr)
+
+# writeFile("treespam.txt", fulltree)
+
+
+
+var cwd = getCurrentDir()
+echo "CWD: ", cwd
+setCurrentDir(splitPath(getCurrentDir()).head)
+cwd = getCurrentDir()
+echo "CWD: ", cwd
