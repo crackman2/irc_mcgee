@@ -156,7 +156,7 @@ proc rexec_directoryListing(event:IrcEvent, client:AsyncIrc) {.async.} =
         cwd = getCurrentDir()
         spacer_len = 0
 
-    for kind, path in walkDir(cwd):
+    for kind, path in walkDir(cwd,false,false):
         case kind:
         of pcDir:
             folders.add(path)
@@ -243,7 +243,7 @@ proc rexec_tree(event:IrcEvent, client:AsyncIrc, path: string, indent: string = 
             idx = 0
             fulltree_len = len(fulltree[])
 
-        for (kind, dirName) in walkDir(path):
+        for (kind, dirName) in walkDir(path,false,false):
             entries.add((kind, dirName))
 
         for entry in entries:
