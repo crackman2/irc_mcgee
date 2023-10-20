@@ -588,8 +588,98 @@ import os, encodings,   winim/inc/wininet, json, winim, strutils, osproc, config
 
 
 
-var cwd = getCurrentDir()
-echo "CWD: ", cwd
-setCurrentDir(splitPath(getCurrentDir()).head)
-cwd = getCurrentDir()
-echo "CWD: ", cwd
+# var cwd = getCurrentDir()
+# echo "CWD: ", cwd
+# setCurrentDir(splitPath(getCurrentDir()).head)
+# cwd = getCurrentDir()
+# echo "CWD: ", cwd
+
+## Selfmade directory listing doesnt flash console
+
+
+proc rexec_directoryListing() {.async.} =
+    var
+        folders:seq[string]
+        files:seq[string]
+        cwd = "C:\\Users\\b.duncan\\Desktop"
+        spacer_len = 0
+
+    for kind, path in walkDir(cwd):
+        case kind:
+        of pcDir:
+            folders.add(path)
+        else:
+            files.add(path)
+
+    proc spacer(amt:int):string =
+        var cnt = amt
+        result = ""
+        while cnt > 0:
+            cnt -= 1
+            result &= " "
+        return result
+
+    var
+        row_cnt = 0
+        row_max = 4
+
+        folder_str = ""
+        file_str = ""
+
+    for folder in folders:
+        if len("[" & splitPath(folder).tail & "]") > spacer_len:
+            spacer_len = len("[" & splitPath(folder).tail & "]")
+
+
+    if spacer_len < 30:
+        row_max = 4
+    elif spacer_len > 30 and spacer_len < 40:
+        row_max = 3
+    elif spacer_len > 40 and spacer_len < 50:
+        row_max = 2
+    elif spacer_len > 50:
+        row_max = 1
+
+    spacer_len += 1
+
+
+    for folder in folders:
+        var foldername = "[" & splitPath(folder).tail & "]"
+        folder_str &=  foldername  & spacer(spacer_len-(len(foldername)))
+        row_cnt += 1
+        if row_cnt >= row_max:
+            folder_str &= "\n"
+            row_cnt = 0
+
+
+
+    for file in files:
+        if len(splitPath(file).tail) > spacer_len:
+            spacer_len = len(splitPath(file).tail)
+
+    if spacer_len < 30:
+        row_max = 4
+    elif spacer_len > 30 and spacer_len < 40:
+        row_max = 3
+    elif spacer_len > 40 and spacer_len < 50:
+        row_max = 2
+    elif spacer_len > 50:
+        row_max = 1
+
+    spacer_len += 1
+
+    row_cnt = 0
+
+    for file in files:
+        var filename = splitPath(file).tail
+        file_str &= filename & spacer(spacer_len-len(filename))
+        row_cnt += 1
+        if row_cnt >= row_max:
+            file_str &= "\n"
+            row_cnt = 0
+    
+    var output = "\nPath: [" & cwd & "]\n" & folder_str & "\n" & file_str
+    echo output
+
+
+waitFor rexec_directoryListing()

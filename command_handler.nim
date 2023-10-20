@@ -156,7 +156,7 @@ proc rexec_directoryListing(event:IrcEvent, client:AsyncIrc) {.async.} =
         cwd = getCurrentDir()
         spacer_len = 0
 
-    for kind, path in walkDir(cwd,false,false):
+    for kind, path in walkDir(cwd):
         case kind:
         of pcDir:
             folders.add(path)
@@ -374,7 +374,7 @@ proc cmd_print(event:IrcEvent, client:AsyncIrc, tokens:seq[string], force:bool) 
             else:
                 discard client.privmsg(event.origin, line)
             if g_abort: break
-            await sleepAsync(g_msg_send_time*1000)
+            sleep(g_msg_send_time)
 
         close(file)
 
