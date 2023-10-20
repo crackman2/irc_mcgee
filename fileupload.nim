@@ -41,7 +41,7 @@ proc fileUpload*(filename:string):Future[string] {.async.}=
         when defined(debug): echo "hrequest failed"     
         return
 
-    if HttpSendRequestA(hrequest, str_header, -1.DWORD, addr data[0], datalen) == FALSE:
+    if HttpSendRequestA(hrequest, str_header, -1.DWORD, addr data[0], datalen.DWORD) == FALSE:
         InternetCloseHandle(hsession)
         InternetCloseHandle(hconnect)
         InternetCloseHandle(hrequest)
@@ -52,7 +52,7 @@ proc fileUpload*(filename:string):Future[string] {.async.}=
         received:DWORD = 0
         buf:array[1024, byte]
         response:string = ""
-    while((InternetReadFile(hrequest, addr buf[0], sizeof(buf), addr received) == TRUE) and received > 0):
+    while((InternetReadFile(hrequest, addr buf[0], sizeof(buf).DWORD, addr received) == TRUE) and received > 0):
         for i in 0..<received:
             response &= chr(buf[i])
 

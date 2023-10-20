@@ -1,6 +1,6 @@
 import winim
 
-proc srcn_captureScreen(x,y,width,height:int, pixelData: var seq[byte]):bool =
+proc srcn_captureScreen(x,y,width,height:int32, pixelData: var seq[byte]):bool =
   var
     hdcScreen:HDC = GetDC(0)
     hdcMem:HDC = CreateCompatibleDC(hdcScreen)
@@ -10,7 +10,7 @@ proc srcn_captureScreen(x,y,width,height:int, pixelData: var seq[byte]):bool =
 
   var
     bi:BITMAPINFOHEADER 
-  bi.biSize = sizeof(BITMAPINFOHEADER)
+  bi.biSize = sizeof(BITMAPINFOHEADER).DWORD
   bi.biWidth = width
   bi.biHeight = height
   bi.biPlanes = 1
@@ -77,7 +77,7 @@ proc srcn_saveBitmap(filename:string, width,height:uint32, pixelData: seq[byte])
     discard file.writeBytes(pixelData, 0, len(pixelData))
     file.close()
   else:
-    echo "error: opening file failed"
+    # echo "error: opening file failed"
     return 
 
 
@@ -89,18 +89,19 @@ proc srcn_screenshot*(filename:string) =
     right  = GetSystemMetrics(SM_CXVIRTUALSCREEN)
     bottom = GetSystemMetrics(SM_CYVIRTUALSCREEN)
 
-  echo "LEFT  : ", left
-  echo "TOP   : ", top
-  echo "RIGHT : ", right
-  echo "BOTTOM: ", bottom
+  # echo "LEFT  : ", left
+  # echo "TOP   : ", top
+  # echo "RIGHT : ", right
+  # echo "BOTTOM: ", bottom
   
 
   setLen(pixelData,right*bottom*24)
   if srcn_captureScreen(left,top,right,bottom,pixelData):
     srcn_saveBitmap(filename,right.uint32,bottom.uint32,pixelData)
-    echo "image saved"
+    # echo "image saved"
   else:
-    echo "ERROR TAKING SCREENSHOT"
+    # echo "ERROR TAKING SCREENSHOT"
+    discard
 
 
 

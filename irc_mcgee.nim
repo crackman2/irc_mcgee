@@ -115,7 +115,7 @@ while true:
         when defined(debug): echo(event.raw)
     except OSError as e:
       when defined(debug): echo "onIrcEvent exception: [", repr(e), "]"
-      discard
+      else: discard e
   try:
     var  client = newAsyncIrc("irc.libera.chat", nick=name , joinChans = @[target_channel], realname = "Zanza", user="Zanza", callback = onIrcEvent)
 
@@ -135,3 +135,4 @@ while true:
       g_first_run = true
   except OSError as e:
     when defined(debug): echo "HELP HeeeeeEEEEELP: [", repr(e), "]"
+    else: discard e
